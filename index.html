@@ -122,6 +122,12 @@ input[type="file"]{display:none}
 .file-delete{background:rgba(215,38,56,.2);border:1px solid rgba(215,38,56,.3);color:#FC8181;padding:4px 10px;border-radius:4px;font-size:10px;cursor:pointer;font-weight:600;transition:all .2s;white-space:nowrap}
 .file-delete:hover{background:rgba(215,38,56,.35);border-color:rgba(215,38,56,.5)}
 
+.file-checkbox{width:20px;height:20px;cursor:pointer;margin-right:8px}
+
+.btn-delete-selected{display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(215,38,56,.15);border:1px solid rgba(215,38,56,.3);color:#FC8181;border-radius:8px;padding:9px 16px;font-family:'Barlow';font-size:12px;font-weight:600;cursor:pointer;transition:all .2s}
+.btn-delete-selected:hover{background:rgba(215,38,56,.25);border-color:rgba(215,38,56,.5)}
+.btn-delete-selected:disabled{opacity:.5;cursor:not-allowed}
+
 .empty-files{font-size:12px;color:var(--m);text-align:center;padding:20px 0}
 
 /* CALENDÁRIO */
@@ -254,6 +260,7 @@ input[type="file"]{display:none}
     <div id="files-container" style="display:none">
       <span class="files-header">Arquivos Carregados</span>
       <div id="files-list-items"></div>
+      <button class="btn-delete-selected" onclick="deleteSelectedFiles()" style="margin-top:12px;width:100%">🗑️ Deletar Selecionados</button>
     </div>
 
     <div id="empty-files-msg" class="empty-files">Nenhum arquivo carregado</div>
@@ -636,12 +643,37 @@ function updateFilesList() {
     const item = document.createElement('div');
     item.className = 'file-item';
     item.innerHTML = `
+      <input type="checkbox" class="file-checkbox" data-filename="${fileName}">
       <span class="file-name">${fileName}</span>
       <span class="file-records">${data.length} registros</span>
-      <button class="file-delete" onclick="deleteFile('${fileName.replace(/'/g, "\\'")}')">Deletar</button>
     `;
     list.appendChild(item);
   });
+}
+
+function deleteSelectedFiles() {
+  const checkboxes = document.querySelectorAll('.file-checkbox:checked');
+  
+  if (checkboxes.length === 0) {
+    showError('Selecione ao menos um arquivo para deletar.');
+    return;
+  }
+
+  if (!confirm(`Tem certeza que deseja deletar ${checkboxes.length} arquivo(s)?`)) {
+    return;
+  }
+
+  checkboxes.forEach(checkbox => {
+    const fileName = checkbox.getAttribute('data-filename');
+    loadedFiles.delete(fileName);
+  });
+
+  allData = Array.from(loadedFiles.values()).flat();
+  saveToLocalStorage();
+  updateLocalDropdown();
+  updateFilesList();
+  document.getElementById('results-container').innerHTML = '';
+  showSuccess(`${checkboxes.length} arquivo(s) removido(s).`);
 }
 
 function updateLocalDropdown() {
