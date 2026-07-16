@@ -332,45 +332,56 @@ document.addEventListener('click', (e) => {
   }
 });
 
-// CARREGAR CSV PUBLICADO DIRETAMENTE
+// CARREGAR CSV VIA BACKEND (SEM CORS)
 async function loadFromGoogleSheets() {
   try {
     document.getElementById('results-container').innerHTML = '<div class="loading"><span class="spinner"></span>Carregando escalas...</div>';
     
-    // Link CSV publicado - funciona sem CORS
-    const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTq7gkTFeC7stzGVvCOr3h7GkvaklQqIsYwaD29WOsInW3td9XnOGa9bnAXltr7JX0dkqBkWEiiHFYb/pub?gid=65303552&single=true&output=csv';
-    
-    console.log('Carregando CSV publicado...');
-    const response = await fetch(csvUrl);
+    console.log('Requisitando /api/escalas...');
+    const response = await fetch('/api/escalas');
     
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`);
     }
     
-    const csvText = await response.text();
+    const json = await response.json();
+    
+    if (!json.success) {
+      throw new Error(json.error || 'Erro na API');
+    }
+    
+    const csvText = json.data;
     console.log('CSV recebido, tamanho:', csvText.length);
     
-    if (!csvText || csvText.length < 50 || csvText.includes('<!DOCTYPE')) {
-      throw new Error('Resposta inválida ou vazia');
+    if (!csvText || csvText.length < 50) {
+      throw new Error('CSV vazio ou inválido');
     }
     
     allData = parseCSVData(csvText);
     
     if (allData.length === 0) {
-      throw new Error('Nenhum dado válido encontrado no CSV');
+      console.warn('Nenhum dado encontrado. Usando exemplo.');
+      allData = getExampleData();
+      setStatus(false);
+      showError('Nenhuma escala encontrada (usando dados de exemplo)');
+    } else {
+      setStatus(true);
+      const cacheMsg = json.cached ? ' (em cache)' : '';
+      showSuccess(`${allData.length} escalas carregadas${cacheMsg}!`);
+      console.log('✅ Dados carregados:', allData.length, 'registros');
     }
     
-    setStatus(true);
     updateLocalDropdown();
-    showSuccess(`${allData.length} escalas carregadas com sucesso!`);
-    console.log('✅ Dados carregados:', allData.length, 'registros');
-    
     document.getElementById('results-container').innerHTML = '';
     
   } catch (error) {
     console.error('❌ Erro ao carregar:', error);
     setStatus(false);
     showError('Erro: ' + error.message);
+    
+    // Fallback para dados de exemplo
+    allData = getExampleData();
+    updateLocalDropdown();
     document.getElementById('results-container').innerHTML = '';
   }
 }
@@ -413,38 +424,69 @@ function getExampleData() {
 
 function parseCSVData(csvText) {
   const lines = csvText.trim().split('\n');
-  if (lines.length < 7) return [];
-
+  console.log('Total de linhas:', lines.length);
+  
   const data = [];
-  for (let i = 6; i < lines.length; i++) {
+  
+  // Mostrar estrutura
+  for (let i = 0; i < Math.min(10, lines.length); i++) {
+    const cols = parseCSVLine(lines[i]);
+    console.log(`Linha ${i}: ${cols.length} colunas | "${cols[0]}" | "${cols[1]}" | "${cols[2]}"`);
+  }
+  
+  // Começar a parsear a partir da linha que tiver "ID" ou similar
+  let startRow = 0;
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].toLowerCase();
+    if (line.includes('id') && (line.includes('data') || line.includes('hora') || line.includes('local'))) {
+      startRow = i + 1;
+      console.log('Cabeçalho encontrado na linha', i, '- começando dados em', startRow);
+      break;
+    }
+  }
+  
+  // Se não encontrou, começa do começo
+  if (startRow === 0) {
+    startRow = 6; // padrão antigo
+    console.log('Cabeçalho não encontrado, usando padrão linha 6');
+  }
+  
+  // Parsear dados
+  for (let i = startRow; i < lines.length; i++) {
     const line = lines[i].trim();
     if (!line) continue;
 
     const cols = parseCSVLine(line);
-    if (cols.length < 10) continue;
+    if (cols.length < 3) continue; // precisa de pelo menos 3 colunas
 
-    const id = cols[0]?.trim() || '';
-    const dataHoraInicio = cols[2]?.trim() || '';
-    const local = cols[6]?.trim() || '';
-    const tipoEscala = cols[8]?.trim() || '';
-    const escalado = cols[9]?.trim() || '';
+    const id = cols[0] ? cols[0].trim() : '';
+    const dataHoraInicio = cols[2] ? cols[2].trim() : '';
+    const local = cols[6] ? cols[6].trim() : '';
+    const tipoEscala = cols[8] ? cols[8].trim() : '';
+    const escalado = cols[9] ? cols[9].trim() : '';
 
-    if (!id || !dataHoraInicio) continue;
+    // Aceitar mesmo sem todos os campos
+    if (id) {
+      const { data: dataParsed, hora } = parseDataHora(dataHoraInicio);
+      const militares = parseEscalado(escalado);
 
-    const { data: dataParsed, hora } = parseDataHora(dataHoraInicio);
-    const militares = parseEscalado(escalado);
-
-    data.push({
-      id,
-      data: dataParsed,
-      hora,
-      local,
-      tipoEscala,
-      escalado,
-      militares
-    });
+      data.push({
+        id,
+        data: dataParsed || dataHoraInicio,
+        hora: hora || '--:--',
+        local: local || 'Sem local',
+        tipoEscala: tipoEscala || 'Não especificado',
+        escalado,
+        militares
+      });
+      
+      if (data.length <= 5) {
+        console.log(`✅ Parsed linha ${i}:`, id, local);
+      }
+    }
   }
 
+  console.log('Total de registros parseados:', data.length);
   return data;
 }
 
