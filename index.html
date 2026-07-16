@@ -96,37 +96,21 @@ main{padding:22px 28px;max-width:1400px;margin:0 auto}
 .empty-state-icon{font-size:48px;margin-bottom:12px;opacity:.6}
 .empty-state-text{font-size:14px;color:var(--m);margin-bottom:8px}
 
-/* CALENDÁRIO */
 .date-picker-wrapper{position:relative;display:inline-block;width:100%}
-
 .calendar-popup{display:none;position:absolute;top:100%;left:0;background:var(--s1);border:1px solid var(--b);border-radius:10px;padding:16px;margin-top:8px;z-index:200;min-width:300px;box-shadow:0 10px 30px rgba(0,0,0,.5)}
-
 .calendar-popup.show{display:block}
-
 .calendar-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
-
 .calendar-nav{display:flex;gap:8px}
-
 .calendar-btn{background:rgba(245,166,35,.15);border:1px solid rgba(245,166,35,.3);color:var(--y);padding:6px 12px;border-radius:6px;font-size:11px;cursor:pointer;transition:all .2s;font-weight:600}
-
 .calendar-btn:hover{background:rgba(245,166,35,.25)}
-
 .calendar-title{font-family:'Barlow Condensed';font-size:14px;font-weight:700;color:var(--t);letter-spacing:1px}
-
 .calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
-
 .calendar-day-header{font-size:10px;font-weight:700;color:var(--m);text-align:center;padding:8px 4px;text-transform:uppercase}
-
 .calendar-day{padding:8px 4px;text-align:center;border-radius:4px;cursor:pointer;font-size:12px;transition:all .2s;border:1px solid transparent}
-
 .calendar-day.empty{color:var(--m);cursor:default}
-
 .calendar-day.other-month{color:var(--m);opacity:.5}
-
 .calendar-day.today{background:rgba(39,174,96,.2);border-color:rgba(39,174,96,.4);color:#4ADE80}
-
 .calendar-day:not(.empty):not(.other-month):hover{background:rgba(245,166,35,.2);border-color:rgba(245,166,35,.3);color:var(--y)}
-
 .calendar-day.selected{background:rgba(215,38,56,.3);border-color:rgba(215,38,56,.5);color:var(--red);font-weight:700}
 
 @media(max-width:768px){
@@ -218,7 +202,6 @@ const SHEET_ID = '1n2jcahuguW40SsSQ5r2UhH47kM5SNQlAPSF2V8UoWNo';
 let allData = [];
 let currentCalendarDate = new Date();
 let selectedDate = null;
-let isOnline = true;
 
 function updateClock() {
   const now = new Date();
@@ -246,7 +229,6 @@ function showSuccess(msg) {
 }
 
 function setStatus(online) {
-  isOnline = online;
   const light = document.getElementById('status-light');
   const text = document.getElementById('status-text');
   
@@ -263,9 +245,7 @@ function setStatus(online) {
 function renderCalendar() {
   const year = currentCalendarDate.getFullYear();
   const month = currentCalendarDate.getMonth();
-  
-  const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
-    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+  const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
   document.getElementById('calendar-title').textContent = `${monthNames[month]} ${year}`;
   
   const grid = document.getElementById('calendar-grid');
@@ -295,7 +275,6 @@ function renderCalendar() {
     const day = document.createElement('div');
     day.className = 'calendar-day';
     day.textContent = i;
-    
     const date = new Date(year, month, i);
     
     if (date.toDateString() === today.toDateString()) {
@@ -348,121 +327,65 @@ function closeCalendar() {
 }
 
 document.getElementById('filter-date').addEventListener('click', openCalendar);
-
 document.addEventListener('click', (e) => {
   if (!e.target.closest('.date-picker-wrapper')) {
     closeCalendar();
   }
 });
 
-// GOOGLE SHEETS INTEGRATION - GVIZ QUERY
+// CARREGAR CSV DA GOOGLE SHEETS COM PROXY CORS
 async function loadFromGoogleSheets() {
   try {
-    document.getElementById('results-container').innerHTML = '<div class="loading"><span class="spinner"></span>Carregando dados...</div>';
+    document.getElementById('results-container').innerHTML = '<div class="loading"><span class="spinner"></span>Carregando escalas...</div>';
     
-    const sheetName = getActiveSheetMonth();
-    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/query?tqx=out:json&sheet=${encodeURIComponent(sheetName)}`;
+    // URL do CSV com proxy CORS
+    const csvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv`;
+    const proxyUrl = `https://cors-anywhere.herokuapp.com/${csvUrl}`;
     
-    const response = await fetch(url);
-    const text = await response.text();
+    const response = await fetch(proxyUrl);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
     
-    let jsonData;
-    try {
-      const jsonMatch = text.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\);/);
-      if (!jsonMatch) {
-        console.log('Resposta recebida:', text.substring(0, 200));
-        throw new Error('Formato de resposta inválido');
-      }
-      jsonData = JSON.parse(jsonMatch[1]);
-    } catch (e) {
-      console.error('Erro ao parsear JSON:', e);
-      throw new Error('Erro ao processar resposta do Google Sheets');
+    const csvText = await response.text();
+    if (!csvText || csvText.includes('<!DOCTYPE')) {
+      throw new Error('CSV inválido ou não acessível');
     }
     
-    if (jsonData.status !== 'ok') {
-      throw new Error(jsonData.message || 'Erro na API Google Sheets');
-    }
-    
-    allData = parseGoogleSheetData(jsonData.table);
+    allData = parseCSVData(csvText);
     setStatus(true);
     updateLocalDropdown();
     
-    if (allData.length === 0) {
-      showError('Planilha carregada mas sem dados válidos');
-      document.getElementById('results-container').innerHTML = '';
+    if (allData.length > 0) {
+      showSuccess(`${allData.length} escalas carregadas!`);
     } else {
-      showSuccess(`${allData.length} registros carregados`);
+      showError('Nenhuma escala encontrada na planilha');
     }
+    document.getElementById('results-container').innerHTML = '';
     
   } catch (error) {
-    console.error('Erro ao carregar Google Sheets:', error);
+    console.error('Erro:', error);
     setStatus(false);
-    showError('Erro: ' + error.message);
+    showError('Erro ao carregar: ' + error.message + '. Tente hospedar o arquivo em um servidor web.');
     document.getElementById('results-container').innerHTML = '';
   }
 }
 
-function getActiveSheetMonth() {
-  const months = ['JANEIRO', 'FEVEREIRO', 'MARÇO', 'ABRIL', 'MAIO', 'JUNHO',
-    'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'];
-  return months[new Date().getMonth()];
-}
-
-function parseGoogleSheetData(table) {
-  if (!table || !table.cols || !table.rows) {
-    console.error('Estrutura de tabela inválida:', table);
-    return [];
-  }
-  
-  const data = [];
-  
-  table.rows.forEach((row, idx) => {
-    const v = row.c ? row.c.map(c => c ? c.v : '') : [];
-    
-    const id = v[0] ? String(v[0]).trim() : '';
-    const dataHoraInicio = v[2] ? String(v[2]).trim() : '';
-    const local = v[6] ? String(v[6]).trim() : '';
-    const tipoEscala = v[8] ? String(v[8]).trim() : '';
-    const escalado = v[9] ? String(v[9]).trim() : '';
-
-    if (!id || !dataHoraInicio) return;
-
-    const { data: dataParsed, hora } = parseDataHora(dataHoraInicio);
-    const militares = parseEscalado(escalado);
-
-    data.push({
-      id,
-      data: dataParsed,
-      hora,
-      local,
-      tipoEscala,
-      escalado,
-      militares
-    });
-  });
-
-  return data;
-}
-
-function parseCSV(csvText) {
+function parseCSVData(csvText) {
   const lines = csvText.trim().split('\n');
   if (lines.length < 7) return [];
 
   const data = [];
-  const headerLine = 5;
-
-  for (let i = headerLine + 1; i < lines.length; i++) {
+  for (let i = 6; i < lines.length; i++) {
     const line = lines[i].trim();
     if (!line) continue;
 
     const cols = parseCSVLine(line);
     if (cols.length < 10) continue;
 
-    const id = cols[0] ? cols[0].trim() : '';
-    const dataHoraInicio = cols[2] ? cols[2].trim() : '';
-    const local = cols[6] ? cols[6].trim() : '';
-    const tipoEscala = cols[8] ? cols[8].trim() : '';
-    const escalado = cols[9] ? cols[9].trim() : '';
+    const id = cols[0]?.trim() || '';
+    const dataHoraInicio = cols[2]?.trim() || '';
+    const local = cols[6]?.trim() || '';
+    const tipoEscala = cols[8]?.trim() || '';
+    const escalado = cols[9]?.trim() || '';
 
     if (!id || !dataHoraInicio) continue;
 
@@ -526,22 +449,17 @@ function parseEscalado(escaladoStr) {
   if (!escaladoStr) return [];
 
   const militares = [];
-  if (!escaladoStr || escaladoStr.trim() === '') return militares;
-  
   const parts = escaladoStr.split('//').map(p => p.trim()).filter(p => p);
 
   parts.forEach(part => {
     let tokens = part.split(/[\t\s]+/).filter(t => t);
-    
     if (tokens.length < 3) return;
 
     const matricula = tokens[0];
     const pmIdx = tokens.indexOf('PM');
-    
     if (pmIdx === -1 || pmIdx < 2) return;
     
     let patentStart = pmIdx - 1;
-    
     if (pmIdx >= 3 && /^\d+\.$/.test(tokens[pmIdx - 2])) {
       patentStart = pmIdx - 2;
     }
@@ -564,10 +482,9 @@ function parseEscalado(escaladoStr) {
 function updateLocalDropdown() {
   const locais = [...new Set(allData.map(d => d.local).filter(Boolean))].sort();
   const select = document.getElementById('filter-local');
-  
   const currentValue = select.value;
-  select.innerHTML = '<option value="">-- Selecione --</option>';
   
+  select.innerHTML = '<option value="">-- Selecione --</option>';
   locais.forEach(local => {
     const opt = document.createElement('option');
     opt.value = local;
@@ -580,12 +497,7 @@ function updateLocalDropdown() {
 
 function applyFilters() {
   if (allData.length === 0) {
-    document.getElementById('results-container').innerHTML = `
-      <div class="empty-state">
-        <div class="empty-state-icon">📋</div>
-        <div class="empty-state-text">Nenhuma escala carregada.</div>
-      </div>
-    `;
+    document.getElementById('results-container').innerHTML = '<div class="empty-state"><div class="empty-state-icon">📋</div><div class="empty-state-text">Nenhuma escala carregada.</div></div>';
     return;
   }
 
@@ -601,23 +513,13 @@ function applyFilters() {
 
   let resultado = allData.filter(row => {
     let match = true;
-
-    if (filtroId && !row.id.toUpperCase().includes(filtroId)) {
-      match = false;
-    }
-
+    if (filtroId && !row.id.toUpperCase().includes(filtroId)) match = false;
     if (filtroData && match) {
       const [dia, mes, ano] = filtroData.split('-').reverse();
       const dataFiltro = `${dia}/${mes}/${ano}`;
-      if (row.data !== dataFiltro) {
-        match = false;
-      }
+      if (row.data !== dataFiltro) match = false;
     }
-
-    if (filtroLocal && row.local.toUpperCase() !== filtroLocal.toUpperCase()) {
-      match = false;
-    }
-
+    if (filtroLocal && row.local.toUpperCase() !== filtroLocal.toUpperCase()) match = false;
     return match;
   });
 
@@ -638,64 +540,30 @@ function renderResults(data) {
   const container = document.getElementById('results-container');
 
   if (data.length === 0) {
-    container.innerHTML = `
-      <div class="empty-state">
-        <div class="empty-state-icon">📋</div>
-        <div class="empty-state-text">Nenhuma escala encontrada com esses filtros.</div>
-      </div>
-    `;
+    container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📋</div><div class="empty-state-text">Nenhuma escala encontrada com esses filtros.</div></div>';
     return;
   }
 
-  let html = `<div style="margin-bottom:16px;font-size:12px;color:var(--m)"><strong>${data.length}</strong> resultado${data.length !== 1 ? 's' : ''}</div>`;
-  html += '<div class="results-grid">';
+  let html = `<div style="margin-bottom:16px;font-size:12px;color:var(--m)"><strong>${data.length}</strong> resultado${data.length !== 1 ? 's' : ''}</div><div class="results-grid">`;
 
   data.forEach(row => {
-    html += `
-      <div class="dejem-card">
-        <div class="card-header">
-          <div class="card-id">ID ${row.id}</div>
-          <div class="card-data">${row.data}</div>
-        </div>
-        
-        <div class="card-row">
-          <span class="card-label">Local</span>
-          <span class="card-value">${row.local}</span>
-        </div>
-
-        <div class="card-row">
-          <span class="card-label">Hora</span>
-          <span class="card-value">${row.hora}</span>
-        </div>
-
-        <div class="card-row">
-          <span class="card-label">Tipo</span>
-          <span class="card-value">${row.tipoEscala}</span>
-        </div>
-    `;
+    html += `<div class="dejem-card">
+      <div class="card-header">
+        <div class="card-id">ID ${row.id}</div>
+        <div class="card-data">${row.data}</div>
+      </div>
+      <div class="card-row"><span class="card-label">Local</span><span class="card-value">${row.local}</span></div>
+      <div class="card-row"><span class="card-label">Hora</span><span class="card-value">${row.hora}</span></div>
+      <div class="card-row"><span class="card-label">Tipo</span><span class="card-value">${row.tipoEscala}</span></div>`;
 
     if (row.militares.length > 0) {
-      html += `
-        <div class="card-militar">
-          <span class="card-militar-label">Militares Escalados</span>
-      `;
-      
+      html += `<div class="card-militar"><span class="card-militar-label">Militares Escalados</span>`;
       row.militares.forEach(mil => {
-        html += `
-          <div class="card-militar-item">
-            <strong>${mil.patente}</strong> ${mil.nome}
-          </div>
-        `;
+        html += `<div class="card-militar-item"><strong>${mil.patente}</strong> ${mil.nome}</div>`;
       });
-
       html += '</div>';
     } else {
-      html += `
-        <div class="card-militar">
-          <span class="card-militar-label">Militares</span>
-          <div class="card-militar-item" style="color:var(--m)">Nenhum militar registrado</div>
-        </div>
-      `;
+      html += `<div class="card-militar"><span class="card-militar-label">Militares</span><div class="card-militar-item" style="color:var(--m)">Nenhum militar registrado</div></div>`;
     }
 
     html += '</div>';
@@ -710,8 +578,10 @@ function renderResults(data) {
   var c=document.getElementById('fireCanvas');
   if(!c) return;
   var running=true;
-  
-  function fallback(){
+  var glopt={antialias:false,alpha:false,preserveDrawingBuffer:true};
+  var gl=null;
+  try{gl=c.getContext('webgl',glopt)||c.getContext('experimental-webgl',glopt);}catch(e){}
+  if(!gl){
     var x=c.getContext('2d');
     function fb(){
       c.width=window.innerWidth;
@@ -725,12 +595,8 @@ function renderResults(data) {
     }
     fb();
     window.addEventListener('resize',fb);
+    return;
   }
-  
-  var glopt={antialias:false,alpha:false,preserveDrawingBuffer:true};
-  var gl=null;
-  try{gl=c.getContext('webgl',glopt)||c.getContext('experimental-webgl',glopt);}catch(e){}
-  if(!gl){fallback();return;}
   
   var W=0,H=0;
   function size(){
@@ -777,7 +643,22 @@ function renderResults(data) {
   gl.attachShader(prog,sh(gl.FRAGMENT_SHADER,fs));
   gl.linkProgram(prog);
   
-  if(!gl.getProgramParameter(prog,gl.LINK_STATUS)){fallback();return;}
+  if(!gl.getProgramParameter(prog,gl.LINK_STATUS)){
+    var x=c.getContext('2d');
+    var fb=function(){
+      c.width=window.innerWidth;
+      c.height=window.innerHeight;
+      var g=x.createLinearGradient(0,0,0,c.height);
+      g.addColorStop(0,'#0a0a0d');
+      g.addColorStop(.5,'#12080a');
+      g.addColorStop(1,'#25100b');
+      x.fillStyle=g;
+      x.fillRect(0,0,c.width,c.height);
+    };
+    fb();
+    window.addEventListener('resize',fb);
+    return;
+  }
   gl.useProgram(prog);
   
   var b=gl.createBuffer();
@@ -804,10 +685,8 @@ function renderResults(data) {
   requestAnimationFrame(frame);
 })();
 
-// INIT - Carregar dados ao abrir
+// INICIAR
 window.addEventListener('load', loadFromGoogleSheets);
-
-// Auto-refresh a cada 30 segundos
 setInterval(loadFromGoogleSheets, 30000);
 </script>
 
