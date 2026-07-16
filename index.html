@@ -355,7 +355,7 @@ document.addEventListener('click', (e) => {
   }
 });
 
-// GOOGLE SHEETS INTEGRATION
+// GOOGLE SHEETS INTEGRATION - GVIZ QUERY
 async function loadFromGoogleSheets() {
   try {
     document.getElementById('results-container').innerHTML = '<div class="loading"><span class="spinner"></span>Carregando dados...</div>';
@@ -366,25 +366,38 @@ async function loadFromGoogleSheets() {
     const response = await fetch(url);
     const text = await response.text();
     
-    const jsonMatch = text.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\);/);
-    if (!jsonMatch) {
-      throw new Error('Erro ao carregar dados');
+    let jsonData;
+    try {
+      const jsonMatch = text.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\);/);
+      if (!jsonMatch) {
+        console.log('Resposta recebida:', text.substring(0, 200));
+        throw new Error('Formato de resposta inválido');
+      }
+      jsonData = JSON.parse(jsonMatch[1]);
+    } catch (e) {
+      console.error('Erro ao parsear JSON:', e);
+      throw new Error('Erro ao processar resposta do Google Sheets');
     }
     
-    const jsonData = JSON.parse(jsonMatch[1]);
     if (jsonData.status !== 'ok') {
-      throw new Error(jsonData.message || 'Erro na API');
+      throw new Error(jsonData.message || 'Erro na API Google Sheets');
     }
     
     allData = parseGoogleSheetData(jsonData.table);
     setStatus(true);
     updateLocalDropdown();
-    showSuccess(`${allData.length} registros carregados`);
+    
+    if (allData.length === 0) {
+      showError('Planilha carregada mas sem dados válidos');
+      document.getElementById('results-container').innerHTML = '';
+    } else {
+      showSuccess(`${allData.length} registros carregados`);
+    }
     
   } catch (error) {
     console.error('Erro ao carregar Google Sheets:', error);
     setStatus(false);
-    showError('Erro ao carregar dados da planilha');
+    showError('Erro: ' + error.message);
     document.getElementById('results-container').innerHTML = '';
   }
 }
@@ -396,12 +409,15 @@ function getActiveSheetMonth() {
 }
 
 function parseGoogleSheetData(table) {
-  if (!table || !table.cols || !table.rows) return [];
+  if (!table || !table.cols || !table.rows) {
+    console.error('Estrutura de tabela inválida:', table);
+    return [];
+  }
   
   const data = [];
   
   table.rows.forEach((row, idx) => {
-    const v = row.c.map(c => c ? c.v : '');
+    const v = row.c ? row.c.map(c => c ? c.v : '') : [];
     
     const id = v[0] ? String(v[0]).trim() : '';
     const dataHoraInicio = v[2] ? String(v[2]).trim() : '';
@@ -426,6 +442,73 @@ function parseGoogleSheetData(table) {
   });
 
   return data;
+}
+
+function parseCSV(csvText) {
+  const lines = csvText.trim().split('\n');
+  if (lines.length < 7) return [];
+
+  const data = [];
+  const headerLine = 5;
+
+  for (let i = headerLine + 1; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+
+    const cols = parseCSVLine(line);
+    if (cols.length < 10) continue;
+
+    const id = cols[0] ? cols[0].trim() : '';
+    const dataHoraInicio = cols[2] ? cols[2].trim() : '';
+    const local = cols[6] ? cols[6].trim() : '';
+    const tipoEscala = cols[8] ? cols[8].trim() : '';
+    const escalado = cols[9] ? cols[9].trim() : '';
+
+    if (!id || !dataHoraInicio) continue;
+
+    const { data: dataParsed, hora } = parseDataHora(dataHoraInicio);
+    const militares = parseEscalado(escalado);
+
+    data.push({
+      id,
+      data: dataParsed,
+      hora,
+      local,
+      tipoEscala,
+      escalado,
+      militares
+    });
+  }
+
+  return data;
+}
+
+function parseCSVLine(line) {
+  const result = [];
+  let current = '';
+  let inQuotes = false;
+
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    const nextChar = line[i + 1];
+
+    if (char === '"') {
+      if (inQuotes && nextChar === '"') {
+        current += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (char === ',' && !inQuotes) {
+      result.push(current);
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+
+  result.push(current);
+  return result;
 }
 
 function parseDataHora(dataHoraStr) {
