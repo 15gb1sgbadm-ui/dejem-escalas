@@ -95,6 +95,9 @@ main{padding:22px 28px;max-width:1400px;margin:0 auto}
 .btn-clear{display:flex;align-items:center;gap:6px;background:rgba(215,38,56,.15);border:1px solid rgba(215,38,56,.3);color:#FC8181;border-radius:8px;padding:9px 16px;font-family:'Barlow';font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;white-space:nowrap}
 .btn-clear:hover{background:rgba(215,38,56,.25);border-color:rgba(215,38,56,.5)}
 
+.btn-clear-data{display:flex;align-items:center;gap:6px;background:rgba(215,38,56,.15);border:1px solid rgba(215,38,56,.3);color:#FC8181;border-radius:8px;padding:9px 16px;font-family:'Barlow';font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;width:100%;justify-content:center;margin-top:16px}
+.btn-clear-data:hover{background:rgba(215,38,56,.25);border-color:rgba(215,38,56,.5)}
+
 .alert{padding:14px 16px;border-radius:8px;margin-bottom:16px;font-size:12px;display:none;align-items:center;gap:8px}
 .alert-error{background:rgba(215,38,56,.15);border:1px solid rgba(215,38,56,.3);color:#FC8181}
 .alert-success{background:rgba(39,174,96,.15);border:1px solid rgba(39,174,96,.3);color:#4ADE80}
@@ -241,6 +244,8 @@ input[type="file"]{display:none}
       <div class="upload-hint">Suporta múltiplos arquivos (um arquivo por mês)</div>
       <input type="file" id="file-input" accept=".csv" multiple>
     </div>
+
+    <button class="btn-clear-data" onclick="clearAllData()">🗑️ Limpar Todos os Dados Salvos</button>
   </div>
 </div>
 
@@ -249,6 +254,113 @@ let allData = [];
 let loadedFiles = new Map();
 let currentCalendarDate = new Date();
 let selectedDate = null;
+
+// IndexedDB
+const DB_NAME = 'DEJEMDashboard';
+const STORE_NAME = 'csvFiles';
+let db;
+
+function initDB() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, 1);
+    
+    request.onerror = () => {
+      console.error('Erro ao abrir IndexedDB');
+      reject();
+    };
+    
+    request.onsuccess = () => {
+      db = request.result;
+      console.log('IndexedDB inicializado');
+      resolve();
+    };
+    
+    request.onupgradeneeded = (event) => {
+      const db = event.target.result;
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        db.createObjectStore(STORE_NAME, { keyPath: 'fileName' });
+      }
+    };
+  });
+}
+
+function saveCSVtoDB(fileName, csvText) {
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction([STORE_NAME], 'readwrite');
+    const store = transaction.objectStore(STORE_NAME);
+    store.put({ fileName, csvText, timestamp: Date.now() });
+    
+    transaction.oncomplete = () => {
+      console.log(`${fileName} salvo em IndexedDB`);
+      resolve();
+    };
+    
+    transaction.onerror = () => {
+      console.error('Erro ao salvar em IndexedDB');
+      reject();
+    };
+  });
+}
+
+function loadCSVsFromDB() {
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction([STORE_NAME], 'readonly');
+    const store = transaction.objectStore(STORE_NAME);
+    const request = store.getAll();
+    
+    request.onsuccess = () => {
+      resolve(request.result);
+    };
+    
+    request.onerror = () => {
+      console.error('Erro ao carregar de IndexedDB');
+      reject([]);
+    };
+  });
+}
+
+function deleteCSVFromDB(fileName) {
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction([STORE_NAME], 'readwrite');
+    const store = transaction.objectStore(STORE_NAME);
+    const request = store.delete(fileName);
+    
+    request.onsuccess = () => {
+      console.log(`${fileName} deletado de IndexedDB`);
+      resolve();
+    };
+    
+    request.onerror = () => {
+      reject();
+    };
+  });
+}
+
+async function restoreCSVsOnLoad() {
+  try {
+    const files = await loadCSVsFromDB();
+    
+    if (files.length > 0) {
+      for (const file of files) {
+        const parsed = parseCSV(file.csvText, file.fileName);
+        if (parsed.length > 0) {
+          loadedFiles.set(file.fileName, parsed);
+          allData = Array.from(loadedFiles.values()).flat();
+        }
+      }
+      
+      updateLocalDropdown();
+      console.log(`${files.length} arquivo(s) restaurado(s) de IndexedDB`);
+    }
+  } catch (error) {
+    console.error('Erro ao restaurar CSVs:', error);
+  }
+}
+
+window.addEventListener('load', async () => {
+  await initDB();
+  await restoreCSVsOnLoad();
+});
 
 function updateClock() {
   const now = new Date();
@@ -540,7 +652,7 @@ function handleFiles(files) {
     }
 
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       try {
         const csvText = e.target.result;
         const parsed = parseCSV(csvText, file.name);
@@ -550,8 +662,16 @@ function handleFiles(files) {
           return;
         }
 
+        // Deletar versão anterior se existir
+        if (loadedFiles.has(file.name)) {
+          await deleteCSVFromDB(file.name);
+        }
+
         loadedFiles.set(file.name, parsed);
         allData = Array.from(loadedFiles.values()).flat();
+
+        // Salvar em IndexedDB
+        await saveCSVtoDB(file.name, csvText);
 
         updateLocalDropdown();
         showSuccess(`${file.name} carregado com ${parsed.length} registros.`);
@@ -638,6 +758,31 @@ function clearFilters() {
   renderCalendar();
   document.getElementById('results-container').innerHTML = '';
   showSuccess('Filtros limpos.');
+}
+
+async function clearAllData() {
+  if (!confirm('Tem certeza que deseja limpar TODOS os arquivos salvos? Esta ação não pode ser desfeita.')) {
+    return;
+  }
+
+  try {
+    const files = await loadCSVsFromDB();
+    
+    for (const file of files) {
+      await deleteCSVFromDB(file.fileName);
+    }
+    
+    allData = [];
+    loadedFiles.clear();
+    updateLocalDropdown();
+    document.getElementById('results-container').innerHTML = '';
+    closeConfigModal();
+    showSuccess('Todos os dados foram limpos.');
+    
+  } catch (error) {
+    console.error('Erro ao limpar dados:', error);
+    showError('Erro ao limpar dados.');
+  }
 }
 
 function renderResults(data) {
