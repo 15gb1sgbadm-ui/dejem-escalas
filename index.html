@@ -333,40 +333,94 @@ document.addEventListener('click', (e) => {
   }
 });
 
-// CARREGAR CSV DA GOOGLE SHEETS COM PROXY CORS
+// CARREGAR CSV DA GOOGLE SHEETS COM MÚLTIPLAS TENTATIVAS + FALLBACK
 async function loadFromGoogleSheets() {
   try {
     document.getElementById('results-container').innerHTML = '<div class="loading"><span class="spinner"></span>Carregando escalas...</div>';
     
-    // URL do CSV com proxy CORS
-    const csvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv`;
-    const proxyUrl = `https://cors-anywhere.herokuapp.com/${csvUrl}`;
+    // Tentar múltiplas URLs
+    const urls = [
+      `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv`,
+      `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`,
+    ];
     
-    const response = await fetch(proxyUrl);
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    let csvText = null;
     
-    const csvText = await response.text();
-    if (!csvText || csvText.includes('<!DOCTYPE')) {
-      throw new Error('CSV inválido ou não acessível');
+    for (let url of urls) {
+      try {
+        console.log('Tentando URL:', url);
+        const response = await fetch(url);
+        
+        if (response.ok) {
+          csvText = await response.text();
+          if (csvText && !csvText.includes('<!DOCTYPE') && csvText.length > 100) {
+            console.log('✅ CSV carregado com sucesso!');
+            break;
+          }
+        }
+      } catch (e) {
+        console.log('❌ URL falhou:', url, e.message);
+      }
     }
     
-    allData = parseCSVData(csvText);
-    setStatus(true);
-    updateLocalDropdown();
-    
-    if (allData.length > 0) {
-      showSuccess(`${allData.length} escalas carregadas!`);
+    if (!csvText || csvText.length < 100) {
+      console.warn('⚠️ Não conseguiu carregar CSV. Usando dados de exemplo.');
+      allData = getExampleData();
+      setStatus(false);
+      showError('Usando dados de exemplo. Verifique se a planilha está compartilhada.');
     } else {
-      showError('Nenhuma escala encontrada na planilha');
+      allData = parseCSVData(csvText);
+      setStatus(true);
+      showSuccess(`${allData.length} escalas carregadas!`);
     }
+    
+    updateLocalDropdown();
     document.getElementById('results-container').innerHTML = '';
     
   } catch (error) {
-    console.error('Erro:', error);
+    console.error('❌ Erro geral:', error);
+    allData = getExampleData();
     setStatus(false);
-    showError('Erro ao carregar: ' + error.message + '. Tente hospedar o arquivo em um servidor web.');
+    showError('Usando dados de exemplo. Erro: ' + error.message);
+    updateLocalDropdown();
     document.getElementById('results-container').innerHTML = '';
   }
+}
+
+// DADOS DE EXEMPLO PARA TESTAR
+function getExampleData() {
+  return [
+    {
+      id: '8604016',
+      data: '16/07/2026',
+      hora: '08:00',
+      local: 'QUARTEL DO COMANDO',
+      tipoEscala: 'ESCALA ORDINÁRIA',
+      escalado: '108248 EDUARDO ALVES CARDOSO 1. SARGENTO PM',
+      militares: [{matricula: '108248', nome: 'EDUARDO ALVES CARDOSO', patente: '1. SARGENTO PM'}]
+    },
+    {
+      id: '8604017',
+      data: '16/07/2026',
+      hora: '14:00',
+      local: 'ESTAÇÃO CENTRAL',
+      tipoEscala: 'ESCALA ORDINÁRIA',
+      escalado: '181371 FABIO TERRA GONCALVES CABO PM',
+      militares: [{matricula: '181371', nome: 'FABIO TERRA GONCALVES', patente: 'CABO PM'}]
+    },
+    {
+      id: '8604018',
+      data: '17/07/2026',
+      hora: '09:00',
+      local: 'ESTAÇÃO SUL',
+      tipoEscala: 'ESCALA ESPECIAL',
+      escalado: '102134 CARLOS SILVA SOLDADO PM // 103456 JOÃO SANTOS SOLDADO PM',
+      militares: [
+        {matricula: '102134', nome: 'CARLOS SILVA', patente: 'SOLDADO PM'},
+        {matricula: '103456', nome: 'JOÃO SANTOS', patente: 'SOLDADO PM'}
+      ]
+    }
+  ];
 }
 
 function parseCSVData(csvText) {
