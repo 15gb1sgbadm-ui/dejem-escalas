@@ -38,8 +38,10 @@ header{background:linear-gradient(135deg,var(--rd) 0%,#1a0a0d 60%);border-bottom
 .qi-v{font-family:'Barlow Condensed';font-size:19px;font-weight:800;line-height:1.1}
 .qd{width:1px;height:28px;background:var(--b)}
 
-.btn-config{background:rgba(245,166,35,.15);border:1px solid rgba(245,166,35,.35);color:var(--y);border-radius:8px;padding:7px 13px;font-family:'Barlow';font-size:12px;cursor:pointer;transition:all .2s;white-space:nowrap;display:flex;align-items:center;gap:6px}
-.btn-config:hover{background:rgba(245,166,35,.25)}
+.status-indicator{width:8px;height:8px;border-radius:50%;background:#4ADE80;animation:pulse 2s infinite;margin-left:6px}
+@keyframes pulse{0%{opacity:1}50%{opacity:.5}100%{opacity:1}}
+
+.status-indicator.offline{background:#FC8181;animation:none}
 
 main{padding:22px 28px;max-width:1400px;margin:0 auto}
 
@@ -85,56 +87,14 @@ main{padding:22px 28px;max-width:1400px;margin:0 auto}
 .card-militar-item{font-size:12px;color:var(--t);line-height:1.5}
 .card-militar-label{font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--m);font-weight:600;margin-bottom:6px;display:block}
 
+.loading{text-align:center;padding:40px 20px;color:var(--m)}
+.spinner{display:inline-block;width:20px;height:20px;border:2px solid var(--b);border-top-color:var(--red);border-radius:50%;animation:spin .8s linear infinite;margin-right:8px;vertical-align:middle}
+
+@keyframes spin{to{transform:rotate(360deg)}}
+
 .empty-state{text-align:center;padding:60px 20px;color:var(--m)}
 .empty-state-icon{font-size:48px;margin-bottom:12px;opacity:.6}
 .empty-state-text{font-size:14px;color:var(--m);margin-bottom:8px}
-
-/* MODAL */
-.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:300;align-items:center;justify-content:center}
-.modal-overlay.open{display:flex}
-
-.modal-content{background:var(--s1);border:1px solid var(--b);border-radius:14px;max-width:600px;width:95%;padding:26px;position:relative;max-height:90vh;overflow-y:auto}
-
-.modal-close{position:absolute;top:14px;right:14px;background:none;border:none;color:var(--m);font-size:24px;cursor:pointer;transition:color .2s}
-.modal-close:hover{color:var(--red)}
-
-.modal-title{font-family:'Barlow Condensed';font-size:20px;font-weight:700;margin-bottom:20px;color:var(--t)}
-
-.upload-area{background:var(--s2);border:2px dashed var(--b);border-radius:10px;padding:24px;text-align:center;cursor:pointer;transition:all .3s;margin-bottom:20px}
-.upload-area:hover{border-color:var(--red);background:var(--s3)}
-.upload-area.dragover{border-color:var(--y);background:var(--s3)}
-
-.upload-icon{font-size:32px;margin-bottom:12px}
-.upload-text{font-size:13px;color:var(--t);margin-bottom:4px}
-.upload-hint{font-size:11px;color:var(--m)}
-
-input[type="file"]{display:none}
-
-/* LISTA DE ARQUIVOS */
-.files-list{background:var(--s2);border:1px solid var(--b);border-radius:10px;padding:16px;margin-bottom:20px}
-.files-header{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--m);font-weight:600;margin-bottom:12px;display:block}
-
-.file-item{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px;background:var(--s3);border-radius:6px;margin-bottom:8px}
-.file-item:last-child{margin-bottom:0}
-
-.file-name{font-size:12px;color:var(--t);font-weight:500;flex:1;word-break:break-word}
-.file-records{font-size:10px;color:var(--m);white-space:nowrap}
-.file-delete{background:rgba(215,38,56,.2);border:1px solid rgba(215,38,56,.3);color:#FC8181;padding:4px 10px;border-radius:4px;font-size:10px;cursor:pointer;font-weight:600;transition:all .2s;white-space:nowrap}
-.file-delete:hover{background:rgba(215,38,56,.35);border-color:rgba(215,38,56,.5)}
-
-.file-checkbox{width:20px;height:20px;cursor:pointer;margin-right:8px}
-
-.btn-delete-selected{display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(215,38,56,.15);border:1px solid rgba(215,38,56,.3);color:#FC8181;border-radius:8px;padding:9px 16px;font-family:'Barlow';font-size:12px;font-weight:600;cursor:pointer;transition:all .2s}
-.btn-delete-selected:hover{background:rgba(215,38,56,.25);border-color:rgba(215,38,56,.5)}
-.btn-delete-selected:disabled{opacity:.5;cursor:not-allowed}
-
-.btn-export, .btn-import{display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(39,174,96,.15);border:1px solid rgba(39,174,96,.3);color:#4ADE80;border-radius:8px;padding:9px 16px;font-family:'Barlow';font-size:12px;font-weight:600;cursor:pointer;transition:all .2s}
-.btn-export:hover, .btn-import:hover{background:rgba(39,174,96,.25);border-color:rgba(39,174,96,.5)}
-
-.btn-import{background:rgba(41,128,185,.15);border-color:rgba(41,128,185,.3);color:#60A5FA}
-.btn-import:hover{background:rgba(41,128,185,.25);border-color:rgba(41,128,185,.5)}
-
-.empty-files{font-size:12px;color:var(--m);text-align:center;padding:20px 0}
 
 /* CALENDÁRIO */
 .date-picker-wrapper{position:relative;display:inline-block;width:100%}
@@ -192,7 +152,10 @@ input[type="file"]{display:none}
     <div class="sub">Dashboard de Escalas</div>
   </div>
   <div class="hright">
-    <button class="btn-config" onclick="openConfigModal()">⚙️ Configurações</button>
+    <div style="display:flex;align-items:center;gap:6px;font-size:10px;color:var(--m)">
+      <span id="status-text">Conectado</span>
+      <div class="status-indicator" id="status-light"></div>
+    </div>
     <div class="qmini">
       <div class="qi">
         <div class="qi-l">Data</div>
@@ -250,43 +213,12 @@ input[type="file"]{display:none}
   <div id="results-container"></div>
 </main>
 
-<!-- MODAL DE CONFIGURAÇÕES -->
-<div class="modal-overlay" id="config-modal">
-  <div class="modal-content">
-    <button class="modal-close" onclick="closeConfigModal()">✕</button>
-    <div class="modal-title">Gerenciar Escalas</div>
-    
-    <div class="upload-area" id="upload-area">
-      <div class="upload-icon">📋</div>
-      <div class="upload-text">Arraste arquivos CSV aqui ou clique para selecionar</div>
-      <div class="upload-hint">Suporta múltiplos arquivos (um arquivo por mês)</div>
-      <input type="file" id="file-input" accept=".csv" multiple>
-    </div>
-
-    <div id="files-container" style="display:none">
-      <span class="files-header">Arquivos Carregados</span>
-      <div id="files-list-items"></div>
-      <button class="btn-delete-selected" onclick="deleteSelectedFiles()" style="margin-top:12px;width:100%">🗑️ Deletar Selecionados</button>
-    </div>
-
-    <div id="empty-files-msg" class="empty-files">Nenhum arquivo carregado</div>
-
-    <div style="margin-top:20px;border-top:1px solid var(--b);padding-top:20px">
-      <div class="files-header">Compartilhar Dados</div>
-      <button class="btn-export" onclick="exportData()" style="width:100%;margin-bottom:8px">📥 Exportar Dados</button>
-      <button class="btn-import" onclick="importData()" style="width:100%">📤 Importar Dados</button>
-      <input type="file" id="import-file" accept=".json" style="display:none">
-    </div>
-  </div>
-</div>
-
 <script>
+const SHEET_ID = '1n2jcahuguW40SsSQ5r2UhH47kM5SNQlAPSF2V8UoWNo';
 let allData = [];
-let loadedFiles = new Map();
 let currentCalendarDate = new Date();
 let selectedDate = null;
-
-const STORAGE_KEY = 'dejem_csv_files';
+let isOnline = true;
 
 function updateClock() {
   const now = new Date();
@@ -313,19 +245,19 @@ function showSuccess(msg) {
   setTimeout(() => { el.style.display = 'none'; }, 3000);
 }
 
-function openConfigModal() {
-  document.getElementById('config-modal').classList.add('open');
-}
-
-function closeConfigModal() {
-  document.getElementById('config-modal').classList.remove('open');
-}
-
-document.getElementById('config-modal').addEventListener('click', (e) => {
-  if (e.target.id === 'config-modal') {
-    closeConfigModal();
+function setStatus(online) {
+  isOnline = online;
+  const light = document.getElementById('status-light');
+  const text = document.getElementById('status-text');
+  
+  if (online) {
+    light.classList.remove('offline');
+    text.textContent = 'Conectado';
+  } else {
+    light.classList.add('offline');
+    text.textContent = 'Offline';
   }
-});
+}
 
 // CALENDÁRIO
 function renderCalendar() {
@@ -423,28 +355,61 @@ document.addEventListener('click', (e) => {
   }
 });
 
-// CSV PARSING
-function parseCSV(csvText, fileName) {
-  const lines = csvText.trim().split('\n');
-  if (lines.length < 7) return [];
+// GOOGLE SHEETS INTEGRATION
+async function loadFromGoogleSheets() {
+  try {
+    document.getElementById('results-container').innerHTML = '<div class="loading"><span class="spinner"></span>Carregando dados...</div>';
+    
+    const sheetName = getActiveSheetMonth();
+    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/query?tqx=out:json&sheet=${encodeURIComponent(sheetName)}`;
+    
+    const response = await fetch(url);
+    const text = await response.text();
+    
+    const jsonMatch = text.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\);/);
+    if (!jsonMatch) {
+      throw new Error('Erro ao carregar dados');
+    }
+    
+    const jsonData = JSON.parse(jsonMatch[1]);
+    if (jsonData.status !== 'ok') {
+      throw new Error(jsonData.message || 'Erro na API');
+    }
+    
+    allData = parseGoogleSheetData(jsonData.table);
+    setStatus(true);
+    updateLocalDropdown();
+    showSuccess(`${allData.length} registros carregados`);
+    
+  } catch (error) {
+    console.error('Erro ao carregar Google Sheets:', error);
+    setStatus(false);
+    showError('Erro ao carregar dados da planilha');
+    document.getElementById('results-container').innerHTML = '';
+  }
+}
 
+function getActiveSheetMonth() {
+  const months = ['JANEIRO', 'FEVEREIRO', 'MARÇO', 'ABRIL', 'MAIO', 'JUNHO',
+    'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'];
+  return months[new Date().getMonth()];
+}
+
+function parseGoogleSheetData(table) {
+  if (!table || !table.cols || !table.rows) return [];
+  
   const data = [];
-  const headerLine = 5;
+  
+  table.rows.forEach((row, idx) => {
+    const v = row.c.map(c => c ? c.v : '');
+    
+    const id = v[0] ? String(v[0]).trim() : '';
+    const dataHoraInicio = v[2] ? String(v[2]).trim() : '';
+    const local = v[6] ? String(v[6]).trim() : '';
+    const tipoEscala = v[8] ? String(v[8]).trim() : '';
+    const escalado = v[9] ? String(v[9]).trim() : '';
 
-  for (let i = headerLine + 1; i < lines.length; i++) {
-    const line = lines[i].trim();
-    if (!line) continue;
-
-    const cols = parseCSVLine(line);
-    if (cols.length < 10) continue;
-
-    const id = cols[0] ? cols[0].trim() : '';
-    const dataHoraInicio = cols[2] ? cols[2].trim() : '';
-    const local = cols[6] ? cols[6].trim() : '';
-    const tipoEscala = cols[8] ? cols[8].trim() : '';
-    const escalado = cols[9] ? cols[9].trim() : '';
-
-    if (!id || !dataHoraInicio) continue;
+    if (!id || !dataHoraInicio) return;
 
     const { data: dataParsed, hora } = parseDataHora(dataHoraInicio);
     const militares = parseEscalado(escalado);
@@ -456,48 +421,19 @@ function parseCSV(csvText, fileName) {
       local,
       tipoEscala,
       escalado,
-      militares,
-      mês: fileName
+      militares
     });
-  }
+  });
 
   return data;
 }
 
-function parseCSVLine(line) {
-  const result = [];
-  let current = '';
-  let inQuotes = false;
-
-  for (let i = 0; i < line.length; i++) {
-    const char = line[i];
-    const nextChar = line[i + 1];
-
-    if (char === '"') {
-      if (inQuotes && nextChar === '"') {
-        current += '"';
-        i++;
-      } else {
-        inQuotes = !inQuotes;
-      }
-    } else if (char === ',' && !inQuotes) {
-      result.push(current);
-      current = '';
-    } else {
-      current += char;
-    }
-  }
-
-  result.push(current);
-  return result;
-}
-
 function parseDataHora(dataHoraStr) {
-  const match = dataHoraStr.match(/(\d{2})\/(\d{2})\/(\d{2})\s+(\d{2}):(\d{2})/);
+  const match = dataHoraStr.match(/(\d{1,2})\/(\d{1,2})\/(\d{2})\s+(\d{2}):(\d{2})/);
   if (!match) return { data: '', hora: '' };
 
   const [, dia, mes, ano, hora, minuto] = match;
-  const dataFormatada = `${dia}/${mes}/20${ano}`;
+  const dataFormatada = `${String(dia).padStart(2, '0')}/${String(mes).padStart(2, '0')}/20${ano}`;
   const horaFormatada = `${hora}:${minuto}`;
 
   return { data: dataFormatada, hora: horaFormatada };
@@ -542,217 +478,6 @@ function parseEscalado(escaladoStr) {
   return militares;
 }
 
-// UPLOAD & STORAGE
-const uploadArea = document.getElementById('upload-area');
-const fileInput = document.getElementById('file-input');
-
-uploadArea.addEventListener('click', () => fileInput.click());
-uploadArea.addEventListener('dragover', (e) => {
-  e.preventDefault();
-  uploadArea.classList.add('dragover');
-});
-uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
-uploadArea.addEventListener('drop', (e) => {
-  e.preventDefault();
-  uploadArea.classList.remove('dragover');
-  handleFiles(e.dataTransfer.files);
-});
-
-fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
-
-function handleFiles(files) {
-  for (const file of files) {
-    if (!file.name.endsWith('.csv')) {
-      showError(`${file.name} não é um CSV válido.`);
-      continue;
-    }
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const csvText = e.target.result;
-        const parsed = parseCSV(csvText, file.name);
-        
-        if (parsed.length === 0) {
-          showError(`${file.name} não contém dados válidos.`);
-          return;
-        }
-
-        loadedFiles.set(file.name, parsed);
-        allData = Array.from(loadedFiles.values()).flat();
-
-        saveToLocalStorage();
-        updateLocalDropdown();
-        updateFilesList();
-        showSuccess(`${file.name} carregado com ${parsed.length} registros.`);
-        applyFilters();
-
-      } catch (error) {
-        console.error('Erro ao processar CSV:', error);
-        showError(`Erro ao processar ${file.name}`);
-      }
-    };
-    reader.readAsText(file);
-  }
-}
-
-function saveToLocalStorage() {
-  const data = {};
-  loadedFiles.forEach((parsed, fileName) => {
-    data[fileName] = parsed;
-  });
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-}
-
-function loadFromLocalStorage() {
-  const stored = localStorage.getItem(STORAGE_KEY);
-  if (stored) {
-    try {
-      const data = JSON.parse(stored);
-      loadedFiles.clear();
-      Object.entries(data).forEach(([fileName, parsed]) => {
-        loadedFiles.set(fileName, parsed);
-      });
-      allData = Array.from(loadedFiles.values()).flat();
-      updateLocalDropdown();
-      updateFilesList();
-    } catch (error) {
-      console.error('Erro ao carregar localStorage:', error);
-    }
-  }
-}
-
-function deleteFile(fileName) {
-  if (!confirm(`Tem certeza que deseja deletar "${fileName}"?`)) {
-    return;
-  }
-
-  loadedFiles.delete(fileName);
-  allData = Array.from(loadedFiles.values()).flat();
-  
-  saveToLocalStorage();
-  updateLocalDropdown();
-  updateFilesList();
-  document.getElementById('results-container').innerHTML = '';
-  showSuccess(`${fileName} removido.`);
-}
-
-function updateFilesList() {
-  const container = document.getElementById('files-container');
-  const list = document.getElementById('files-list-items');
-  const emptyMsg = document.getElementById('empty-files-msg');
-
-  if (loadedFiles.size === 0) {
-    container.style.display = 'none';
-    emptyMsg.style.display = 'block';
-    return;
-  }
-
-  container.style.display = 'block';
-  emptyMsg.style.display = 'none';
-  list.innerHTML = '';
-
-  loadedFiles.forEach((data, fileName) => {
-    const item = document.createElement('div');
-    item.className = 'file-item';
-    item.innerHTML = `
-      <input type="checkbox" class="file-checkbox" data-filename="${fileName}">
-      <span class="file-name">${fileName}</span>
-      <span class="file-records">${data.length} registros</span>
-    `;
-    list.appendChild(item);
-  });
-}
-
-function deleteSelectedFiles() {
-  const checkboxes = document.querySelectorAll('.file-checkbox:checked');
-  
-  if (checkboxes.length === 0) {
-    showError('Selecione ao menos um arquivo para deletar.');
-    return;
-  }
-
-  if (!confirm(`Tem certeza que deseja deletar ${checkboxes.length} arquivo(s)?`)) {
-    return;
-  }
-
-  checkboxes.forEach(checkbox => {
-    const fileName = checkbox.getAttribute('data-filename');
-    loadedFiles.delete(fileName);
-  });
-
-  allData = Array.from(loadedFiles.values()).flat();
-  saveToLocalStorage();
-  updateLocalDropdown();
-  updateFilesList();
-  document.getElementById('results-container').innerHTML = '';
-  showSuccess(`${checkboxes.length} arquivo(s) removido(s).`);
-}
-
-function exportData() {
-  if (loadedFiles.size === 0) {
-    showError('Nenhum arquivo carregado para exportar.');
-    return;
-  }
-
-  const data = {};
-  loadedFiles.forEach((parsed, fileName) => {
-    data[fileName] = parsed;
-  });
-
-  const jsonStr = JSON.stringify(data, null, 2);
-  const blob = new Blob([jsonStr], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `dejem-escalas-${new Date().toISOString().split('T')[0]}.json`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-  
-  showSuccess('Dados exportados com sucesso!');
-}
-
-function importData() {
-  document.getElementById('import-file').click();
-}
-
-document.getElementById('import-file').addEventListener('change', (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-
-  const reader = new FileReader();
-  reader.onload = (event) => {
-    try {
-      const data = JSON.parse(event.target.result);
-      
-      if (!data || typeof data !== 'object') {
-        showError('Arquivo inválido.');
-        return;
-      }
-
-      loadedFiles.clear();
-      Object.entries(data).forEach(([fileName, parsed]) => {
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          loadedFiles.set(fileName, parsed);
-        }
-      });
-
-      allData = Array.from(loadedFiles.values()).flat();
-      saveToLocalStorage();
-      updateLocalDropdown();
-      updateFilesList();
-      showSuccess(`${loadedFiles.size} arquivo(s) importado(s) com sucesso!`);
-
-    } catch (error) {
-      console.error('Erro ao importar:', error);
-      showError('Erro ao importar arquivo. Verifique o formato.');
-    }
-  };
-  reader.readAsText(file);
-});
-
 function updateLocalDropdown() {
   const locais = [...new Set(allData.map(d => d.local).filter(Boolean))].sort();
   const select = document.getElementById('filter-local');
@@ -776,7 +501,6 @@ function applyFilters() {
       <div class="empty-state">
         <div class="empty-state-icon">📋</div>
         <div class="empty-state-text">Nenhuma escala carregada.</div>
-        <div style="font-size:11px;color:var(--m);margin-top:8px">Use o botão de Configurações para importar arquivos CSV.</div>
       </div>
     `;
     return;
@@ -997,8 +721,11 @@ function renderResults(data) {
   requestAnimationFrame(frame);
 })();
 
-// INIT - CARREGAR DADOS SALVOS
-window.addEventListener('load', loadFromLocalStorage);
+// INIT - Carregar dados ao abrir
+window.addEventListener('load', loadFromGoogleSheets);
+
+// Auto-refresh a cada 30 segundos
+setInterval(loadFromGoogleSheets, 30000);
 </script>
 
 </body>
