@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dashboard DEJEM — 1º SGB</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --red:#D72638;
+  --rd:#A81C28;
+  --y:#F5A623;
+  --bg:#0D0F14;
+  --s1:rgba(14,18,27,.72);
+  --s2:rgba(19,24,36,.64);
+  --s3:rgba(34,42,58,.60);
+  --b:rgba(255,255,255,.10);
+  --t:#F0F2F7;
+  --m:#8A93AB;
+  --g:#27AE60;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html{background:#05070d}
+body{background:transparent;color:var(--t);font-family:'Barlow',sans-serif;font-size:14px}
+
+header{background:linear-gradient(135deg,var(--rd) 0%,#1a0a0d 60%);border-bottom:3px solid var(--red);padding:12px 28px;display:flex;align-items:center;justify-content:space-between;gap:12px;position:sticky;top:0;z-index:100;flex-wrap:wrap}
+
+.hbrand{display:flex;align-items:center;gap:12px}
+.hbrand .logo{font-family:'Barlow Condensed';font-size:26px;font-weight:800;letter-spacing:2px;color:#fff;line-height:1}
+.hbrand .logo span{color:var(--y)}
+.hbrand .sub{font-size:10px;color:rgba(255,255,255,.5);letter-spacing:3px;text-transform:uppercase;margin-top:2px}
+
+.hright{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.qmini{display:flex;align-items:center;gap:8px;background:rgba(0,0,0,.35);border:1px solid var(--b);border-radius:8px;padding:7px 12px}
+.qi{text-align:center}
+.qi-l{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--m)}
+.qi-v{font-family:'Barlow Condensed';font-size:19px;font-weight:800;line-height:1.1}
+.qd{width:1px;height:28px;background:var(--b)}
+
+.btn-config{background:rgba(245,166,35,.15);border:1px solid rgba(245,166,35,.35);color:var(--y);border-radius:8px;padding:7px 13px;font-family:'Barlow';font-size:12px;cursor:pointer;transition:all .2s;white-space:nowrap;display:flex;align-items:center;gap:6px}
+.btn-config:hover{background:rgba(245,166,35,.25)}
+
+main{padding:22px 28px;max-width:1400px;margin:0 auto}
+
+.filter-group{display:flex;gap:15px;flex-wrap:wrap;align-items:flex-end;margin-bottom:20px}
+.filter-item{display:flex;flex-direction:column;gap:5px}
+.filter-item label{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--m);font-weight:600}
+
+.filter-item input,
+.filter-item select{background:var(--s2);border:1px solid var(--b);border-radius:8px;color:var(--t);padding:9px 13px;font-family:'Barlow';font-size:13px;outline:none;transition:border .2s;min-width:180px;cursor:pointer}
+
+/* CALENDÁRIO */
+.date-picker-wrapper{position:relative;display:inline-block;width:100%}
+
+.calendar-popup{display:none;position:absolute;top:100%;left:0;background:var(--s1);border:1px solid var(--b);border-radius:10px;padding:16px;margin-top:8px;z-index:200;min-width:300px;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+
+.calendar-popup.show{display:block}
+
+.calendar-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+
+.calendar-nav{display:flex;gap:8px}
+
+.calendar-btn{background:rgba(245,166,35,.15);border:1px solid rgba(245,166,35,.3);color:var(--y);padding:6px 12px;border-radius:6px;font-size:11px;cursor:pointer;transition:all .2s;font-weight:600}
+
+.calendar-btn:hover{background:rgba(245,166,35,.25)}
+
+.calendar-title{font-family:'Barlow Condensed';font-size:14px;font-weight:700;color:var(--t);letter-spacing:1px}
+
+.calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+
+.calendar-day-header{font-size:10px;font-weight:700;color:var(--m);text-align:center;padding:8px 4px;text-transform:uppercase}
+
+.calendar-day{padding:8px 4px;text-align:center;border-radius:4px;cursor:pointer;font-size:12px;transition:all .2s;border:1px solid transparent}
+
+.calendar-day.empty{color:var(--m);cursor:default}
+
+.calendar-day.other-month{color:var(--m);opacity:.5}
+
+.calendar-day.today{background:rgba(39,174,96,.2);border-color:rgba(39,174,96,.4);color:#4ADE80}
+
+.calendar-day:not(.empty):not(.other-month):hover{background:rgba(245,166,35,.2);border-color:rgba(245,166,35,.3);color:var(--y)}
+
+.calendar-day.selected{background:rgba(215,38,56,.3);border-color:rgba(215,38,56,.5);color:var(--red);font-weight:700}
+
+.filter-item input:focus,
+.filter-item select:focus{border-color:var(--red)}
+
+.filter-item select option{background:var(--s2);color:var(--t)}
+
+.btn-apply{display:flex;align-items:center;gap:6px;background:rgba(39,174,96,.2);border:1px solid rgba(39,174,96,.4);color:#4ADE80;border-radius:8px;padding:9px 16px;font-family:'Barlow';font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;white-space:nowrap}
+.btn-apply:hover{background:rgba(39,174,96,.35)}
+.btn-apply:disabled{opacity:.5;cursor:not-allowed}
+
+.btn-clear{display:flex;align-items:center;gap:6px;background:rgba(215,38,56,.15);border:1px solid rgba(215,38,56,.3);color:#FC8181;border-radius:8px;padding:9px 16px;font-family:'Barlow';font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;white-space:nowrap}
+.btn-clear:hover{background:rgba(215,38,56,.25);border-color:rgba(215,38,56,.5)}
+
+.alert{padding:14px 16px;border-radius:8px;margin-bottom:16px;font-size:12px;display:none;align-items:center;gap:8px}
+.alert-error{background:rgba(215,38,56,.15);border:1px solid rgba(215,38,56,.3);color:#FC8181}
+.alert-success{background:rgba(39,174,96,.15);border:1px solid rgba(39,174,96,.3);color:#4ADE80}
+
+.results-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px;margin-top:20px}
+
+.dejem-card{background:var(--s2);border:1px solid var(--b);border-radius:12px;padding:18px;position:relative;overflow:hidden}
+.dejem-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#E5687A,#E7B24B,#2FB98A)}
+
+.card-header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--b)}
+.card-id{font-family:'Barlow Condensed';font-size:18px;font-weight:800;color:var(--y)}
+.card-data{font-size:11px;color:var(--m);letter-spacing:1px}
+
+.card-row{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,.05)}
+.card-row:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+
+.card-label{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--m);font-weight:600;min-width:80px}
+.card-value{font-size:13px;color:var(--t);font-weight:500;word-break:break-word;text-align:right;flex:1}
+
+.card-militar{background:var(--s3);border-radius:6px;padding:12px;margin-top:12px;border-left:3px solid var(--y)}
+.card-militar-item{font-size:12px;color:var(--t);line-height:1.5}
+.card-militar-label{font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--m);font-weight:600;margin-bottom:6px;display:block}
+
+.loading{text-align:center;padding:40px 20px;color:var(--m)}
+.spinner{display:inline-block;width:20px;height:20px;border:2px solid var(--b);border-top-color:var(--red);border-radius:50%;animation:spin .8s linear infinite;margin-right:8px;vertical-align:middle}
+
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.empty-state{text-align:center;padding:60px 20px;color:var(--m)}
+.empty-state-icon{font-size:48px;margin-bottom:12px;opacity:.6}
+.empty-state-text{font-size:14px;color:var(--m);margin-bottom:8px}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:300;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+
+.modal-content{background:var(--s1);border:1px solid var(--b);border-radius:14px;max-width:600px;width:95%;padding:26px;position:relative;max-height:90vh;overflow-y:auto}
+
+.modal-close{position:absolute;top:14px;right:14px;background:none;border:none;color:var(--m);font-size:24px;cursor:pointer;transition:color .2s}
+.modal-close:hover{color:var(--red)}
+
+.modal-title{font-family:'Barlow Condensed';font-size:20px;font-weight:700;margin-bottom:20px;color:var(--t)}
+
+.upload-area{background:var(--s2);border:2px dashed var(--b);border-radius:10px;padding:24px;text-align:center;cursor:pointer;transition:all .3s;margin-bottom:20px}
+.upload-area:hover{border-color:var(--red);background:var(--s3)}
+.upload-area.dragover{border-color:var(--y);background:var(--s3)}
+
+.upload-icon{font-size:32px;margin-bottom:12px}
+.upload-text{font-size:13px;color:var(--t);margin-bottom:4px}
+.upload-hint{font-size:11px;color:var(--m)}
+
+input[type="file"]{display:none}
+
+@media(max-width:768px){
+  header{padding:12px 16px;flex-direction:column;align-items:flex-start}
+  main{padding:16px}
+  .filter-group{flex-direction:column;gap:8px}
+  .filter-item{width:100%}
+  .filter-item input,
+  .filter-item select{width:100%;min-width:auto}
+  .results-grid{grid-template-columns:1fr}
+  .hbrand .logo{font-size:20px}
+  .card-header{flex-direction:column;align-items:flex-start}
+}
+</style>
+</head>
+<body>
+
+<canvas id="fireCanvas" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;display:block;"></canvas>
+
+<header>
+  <div class="hbrand">
+    <div class="logo">DEJEM <span>1º SGB</span></div>
+    <div class="sub">Dashboard de Escalas</div>
+  </div>
+  <div class="hright">
+    <button class="btn-config" onclick="openConfigModal()">⚙️ Configurações</button>
+    <div class="qmini">
+      <div class="qi">
+        <div class="qi-l">Data</div>
+        <div class="qi-v" id="current-date">--/--</div>
+      </div>
+      <div class="qd"></div>
+      <div class="qi">
+        <div class="qi-l">Hora</div>
+        <div class="qi-v" id="current-time">--:--</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="alert alert-error" id="alert-error"></div>
+  <div class="alert alert-success" id="alert-success"></div>
+
+  <div class="filter-group">
+    <div class="filter-item">
+      <label for="filter-id">ID</label>
+      <input type="text" id="filter-id" placeholder="Ex: 8604016">
+    </div>
+    
+    <div class="filter-item">
+      <label for="filter-date">Por Data</label>
+      <div class="date-picker-wrapper">
+        <input type="text" id="filter-date" placeholder="Clique para selecionar" readonly>
+        <div class="calendar-popup" id="calendar-popup">
+          <div class="calendar-header">
+            <div class="calendar-nav">
+              <button class="calendar-btn" onclick="prevMonth()">← Anterior</button>
+            </div>
+            <div class="calendar-title" id="calendar-title">Julho 2026</div>
+            <div class="calendar-nav">
+              <button class="calendar-btn" onclick="nextMonth()">Próximo →</button>
+            </div>
+          </div>
+          <div class="calendar-grid" id="calendar-grid"></div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="filter-item">
+      <label for="filter-local">Por Local</label>
+      <select id="filter-local">
+        <option value="">-- Selecione --</option>
+      </select>
+    </div>
+
+    <button class="btn-apply" id="btn-filter" onclick="applyFilters()">Pesquisar</button>
+    <button class="btn-clear" onclick="clearFilters()">Limpar</button>
+  </div>
+
+  <div id="results-container"></div>
+</main>
+
+<!-- MODAL DE CONFIGURAÇÕES -->
+<div class="modal-overlay" id="config-modal">
+  <div class="modal-content">
+    <button class="modal-close" onclick="closeConfigModal()">✕</button>
+    <div class="modal-title">Gerenciar Escalas</div>
+    
+    <div class="upload-area" id="upload-area">
+      <div class="upload-icon">📋</div>
+      <div class="upload-text">Arraste arquivos CSV aqui ou clique para selecionar</div>
+      <div class="upload-hint">Suporta múltiplos arquivos (um arquivo por mês)</div>
+      <input type="file" id="file-input" accept=".csv" multiple>
+    </div>
+  </div>
+</div>
+
+<script>
+let allData = [];
+let loadedFiles = new Map();
+let currentCalendarDate = new Date();
+let selectedDate = null;
+
+function updateClock() {
+  const now = new Date();
+  const date = now.toLocaleDateString('pt-BR');
+  const time = now.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+  document.getElementById('current-date').textContent = date;
+  document.getElementById('current-time').textContent = time;
+}
+
+updateClock();
+setInterval(updateClock, 1000);
+
+// CALENDÁRIO
+function renderCalendar() {
+  const year = currentCalendarDate.getFullYear();
+  const month = currentCalendarDate.getMonth();
+  
+  // Atualizar título
+  const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+  document.getElementById('calendar-title').textContent = `${monthNames[month]} ${year}`;
+  
+  // Limpar grid
+  const grid = document.getElementById('calendar-grid');
+  grid.innerHTML = '';
+  
+  // Headers de dias da semana
+  const dayHeaders = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'];
+  dayHeaders.forEach(day => {
+    const header = document.createElement('div');
+    header.className = 'calendar-day-header';
+    header.textContent = day;
+    grid.appendChild(header);
+  });
+  
+  // Primeiro dia do mês
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const daysInPrevMonth = new Date(year, month, 0).getDate();
+  
+  // Dias do mês anterior
+  for (let i = firstDay - 1; i >= 0; i--) {
+    const day = document.createElement('div');
+    day.className = 'calendar-day other-month';
+    day.textContent = daysInPrevMonth - i;
+    grid.appendChild(day);
+  }
+  
+  // Dias do mês atual
+  const today = new Date();
+  for (let i = 1; i <= daysInMonth; i++) {
+    const day = document.createElement('div');
+    day.className = 'calendar-day';
+    day.textContent = i;
+    
+    const date = new Date(year, month, i);
+    
+    // Marcar hoje
+    if (date.toDateString() === today.toDateString()) {
+      day.classList.add('today');
+    }
+    
+    // Marcar selecionado
+    if (selectedDate && date.toDateString() === selectedDate.toDateString()) {
+      day.classList.add('selected');
+    }
+    
+    day.addEventListener('click', () => selectDate(date));
+    grid.appendChild(day);
+  }
+  
+  // Dias do mês próximo
+  const remainingDays = 42 - (firstDay + daysInMonth);
+  for (let i = 1; i <= remainingDays; i++) {
+    const day = document.createElement('div');
+    day.className = 'calendar-day other-month';
+    day.textContent = i;
+    grid.appendChild(day);
+  }
+}
+
+function selectDate(date) {
+  selectedDate = date;
+  const dateStr = date.toISOString().split('T')[0]; // YYYY-MM-DD
+  document.getElementById('filter-date').value = dateStr;
+  renderCalendar();
+  closeCalendar();
+  applyFilters();
+}
+
+function prevMonth() {
+  currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1);
+  renderCalendar();
+}
+
+function nextMonth() {
+  currentCalendarDate.setMonth(currentCalendarDate.getMonth() + 1);
+  renderCalendar();
+}
+
+function openCalendar() {
+  document.getElementById('calendar-popup').classList.add('show');
+  renderCalendar();
+}
+
+function closeCalendar() {
+  document.getElementById('calendar-popup').classList.remove('show');
+}
+
+document.getElementById('filter-date').addEventListener('click', openCalendar);
+
+document.addEventListener('click', (e) => {
+  const dateInput = document.getElementById('filter-date');
+  const calendarPopup = document.getElementById('calendar-popup');
+  
+  if (!e.target.closest('.date-picker-wrapper')) {
+    closeCalendar();
+  }
+});
+
+function showError(msg) {
+  const el = document.getElementById('alert-error');
+  el.textContent = msg;
+  el.style.display = 'flex';
+  setTimeout(() => { el.style.display = 'none'; }, 5000);
+}
+
+function showSuccess(msg) {
+  const el = document.getElementById('alert-success');
+  el.textContent = msg;
+  el.style.display = 'flex';
+  setTimeout(() => { el.style.display = 'none'; }, 3000);
+}
+
+function openConfigModal() {
+  document.getElementById('config-modal').classList.add('open');
+}
+
+function closeConfigModal() {
+  document.getElementById('config-modal').classList.remove('open');
+}
+
+document.getElementById('config-modal').addEventListener('click', (e) => {
+  if (e.target.id === 'config-modal') {
+    closeConfigModal();
+  }
+});
+
+function parseCSV(csvText, fileName) {
+  const lines = csvText.trim().split('\n');
+  if (lines.length < 7) return [];
+
+  const data = [];
+  const headerLine = 5;
+
+  for (let i = headerLine + 1; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+
+    const cols = parseCSVLine(line);
+    if (cols.length < 10) continue;
+
+    const id = cols[0] ? cols[0].trim() : '';
+    const dataHoraInicio = cols[2] ? cols[2].trim() : '';
+    const local = cols[6] ? cols[6].trim() : '';
+    const tipoEscala = cols[8] ? cols[8].trim() : '';
+    const escalado = cols[9] ? cols[9].trim() : '';
+
+    if (!id || !dataHoraInicio) continue;
+
+    const { data: dataParsed, hora } = parseDataHora(dataHoraInicio);
+    const militares = parseEscalado(escalado);
+
+    data.push({
+      id,
+      data: dataParsed,
+      hora,
+      local,
+      tipoEscala,
+      escalado,
+      militares,
+      mês: fileName
+    });
+  }
+
+  return data;
+}
+
+function parseCSVLine(line) {
+  const result = [];
+  let current = '';
+  let inQuotes = false;
+
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    const nextChar = line[i + 1];
+
+    if (char === '"') {
+      if (inQuotes && nextChar === '"') {
+        current += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (char === ',' && !inQuotes) {
+      result.push(current);
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+
+  result.push(current);
+  return result;
+}
+
+function parseDataHora(dataHoraStr) {
+  const match = dataHoraStr.match(/(\d{2})\/(\d{2})\/(\d{2})\s+(\d{2}):(\d{2})/);
+  if (!match) return { data: '', hora: '' };
+
+  const [, dia, mes, ano, hora, minuto] = match;
+  const dataFormatada = `${dia}/${mes}/20${ano}`;
+  const horaFormatada = `${hora}:${minuto}`;
+
+  return { data: dataFormatada, hora: horaFormatada };
+}
+
+function parseEscalado(escaladoStr) {
+  if (!escaladoStr) return [];
+
+  const militares = [];
+  if (!escaladoStr || escaladoStr.trim() === '') return militares;
+  
+  const parts = escaladoStr.split('//').map(p => p.trim()).filter(p => p);
+
+  parts.forEach(part => {
+    let tokens = part.split(/[\t\s]+/).filter(t => t);
+    
+    if (tokens.length < 3) return;
+
+    const matricula = tokens[0];
+    const pmIdx = tokens.indexOf('PM');
+    
+    if (pmIdx === -1 || pmIdx < 2) return;
+    
+    let patentStart = pmIdx - 1;
+    
+    if (pmIdx >= 3 && /^\d+\.$/.test(tokens[pmIdx - 2])) {
+      patentStart = pmIdx - 2;
+    }
+    
+    const nome = tokens.slice(1, patentStart).join(' ');
+    const patente = tokens.slice(patentStart).join(' ');
+
+    if (matricula && nome.trim() && patente.trim()) {
+      militares.push({
+        matricula: matricula.trim(),
+        nome: nome.trim(),
+        patente: patente.trim()
+      });
+    }
+  });
+
+  return militares;
+}
+
+const uploadArea = document.getElementById('upload-area');
+const fileInput = document.getElementById('file-input');
+
+uploadArea.addEventListener('click', () => fileInput.click());
+uploadArea.addEventListener('dragover', (e) => {
+  e.preventDefault();
+  uploadArea.classList.add('dragover');
+});
+uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
+uploadArea.addEventListener('drop', (e) => {
+  e.preventDefault();
+  uploadArea.classList.remove('dragover');
+  handleFiles(e.dataTransfer.files);
+});
+
+fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+
+function handleFiles(files) {
+  for (const file of files) {
+    if (!file.name.endsWith('.csv')) {
+      showError(`${file.name} não é um CSV válido.`);
+      continue;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const csvText = e.target.result;
+        const parsed = parseCSV(csvText, file.name);
+        
+        if (parsed.length === 0) {
+          showError(`${file.name} não contém dados válidos.`);
+          return;
+        }
+
+        loadedFiles.set(file.name, parsed);
+        allData = Array.from(loadedFiles.values()).flat();
+
+        updateLocalDropdown();
+        showSuccess(`${file.name} carregado com ${parsed.length} registros.`);
+        applyFilters();
+
+      } catch (error) {
+        console.error('Erro ao processar CSV:', error);
+        showError(`Erro ao processar ${file.name}`);
+      }
+    };
+    reader.readAsText(file);
+  }
+}
+
+function updateLocalDropdown() {
+  const locais = [...new Set(allData.map(d => d.local).filter(Boolean))].sort();
+  const select = document.getElementById('filter-local');
+  
+  const currentValue = select.value;
+  select.innerHTML = '<option value="">-- Selecione --</option>';
+  
+  locais.forEach(local => {
+    const opt = document.createElement('option');
+    opt.value = local;
+    opt.textContent = local;
+    select.appendChild(opt);
+  });
+
+  select.value = currentValue;
+}
+
+function applyFilters() {
+  if (allData.length === 0) {
+    document.getElementById('results-container').innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon">📋</div>
+        <div class="empty-state-text">Nenhuma escala carregada.</div>
+        <div style="font-size:11px;color:var(--m);margin-top:8px">Use o botão de Configurações para importar arquivos CSV.</div>
+      </div>
+    `;
+    return;
+  }
+
+  const filtroId = document.getElementById('filter-id').value.trim().toUpperCase();
+  const filtroData = document.getElementById('filter-date').value;
+  const filtroLocal = document.getElementById('filter-local').value;
+
+  if (!filtroId && !filtroData && !filtroLocal) {
+    showError('Selecione ao menos um filtro (ID, Data ou Local).');
+    document.getElementById('results-container').innerHTML = '';
+    return;
+  }
+
+  let resultado = allData.filter(row => {
+    let match = true;
+
+    if (filtroId && !row.id.toUpperCase().includes(filtroId)) {
+      match = false;
+    }
+
+    if (filtroData && match) {
+      const [dia, mes, ano] = filtroData.split('-').reverse();
+      const dataFiltro = `${dia}/${mes}/${ano}`;
+      if (row.data !== dataFiltro) {
+        match = false;
+      }
+    }
+
+    if (filtroLocal && row.local.toUpperCase() !== filtroLocal.toUpperCase()) {
+      match = false;
+    }
+
+    return match;
+  });
+
+  renderResults(resultado);
+}
+
+function clearFilters() {
+  document.getElementById('filter-id').value = '';
+  document.getElementById('filter-date').value = '';
+  document.getElementById('filter-local').value = '';
+  selectedDate = null;
+  renderCalendar();
+  document.getElementById('results-container').innerHTML = '';
+  showSuccess('Filtros limpos.');
+}
+
+function renderResults(data) {
+  const container = document.getElementById('results-container');
+
+  if (data.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon">📋</div>
+        <div class="empty-state-text">Nenhuma escala encontrada com esses filtros.</div>
+      </div>
+    `;
+    return;
+  }
+
+  let html = `<div style="margin-bottom:16px;font-size:12px;color:var(--m)"><strong>${data.length}</strong> resultado${data.length !== 1 ? 's' : ''}</div>`;
+  html += '<div class="results-grid">';
+
+  data.forEach(row => {
+    html += `
+      <div class="dejem-card">
+        <div class="card-header">
+          <div class="card-id">ID ${row.id}</div>
+          <div class="card-data">${row.data}</div>
+        </div>
+        
+        <div class="card-row">
+          <span class="card-label">Local</span>
+          <span class="card-value">${row.local}</span>
+        </div>
+
+        <div class="card-row">
+          <span class="card-label">Hora</span>
+          <span class="card-value">${row.hora}</span>
+        </div>
+
+        <div class="card-row">
+          <span class="card-label">Tipo</span>
+          <span class="card-value">${row.tipoEscala}</span>
+        </div>
+    `;
+
+    if (row.militares.length > 0) {
+      html += `
+        <div class="card-militar">
+          <span class="card-militar-label">Militares Escalados</span>
+      `;
+      
+      row.militares.forEach(mil => {
+        html += `
+          <div class="card-militar-item">
+            <strong>${mil.patente}</strong> ${mil.nome}
+          </div>
+        `;
+      });
+
+      html += '</div>';
+    } else {
+      html += `
+        <div class="card-militar">
+          <span class="card-militar-label">Militares</span>
+          <div class="card-militar-item" style="color:var(--m)">Nenhum militar registrado</div>
+        </div>
+      `;
+    }
+
+    html += '</div>';
+  });
+
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+(function(){
+  var c=document.getElementById('fireCanvas');
+  if(!c) return;
+  var running=true;
+  
+  function fallback(){
+    var x=c.getContext('2d');
+    function fb(){
+      c.width=window.innerWidth;
+      c.height=window.innerHeight;
+      var g=x.createLinearGradient(0,0,0,c.height);
+      g.addColorStop(0,'#0a0a0d');
+      g.addColorStop(.5,'#12080a');
+      g.addColorStop(1,'#25100b');
+      x.fillStyle=g;
+      x.fillRect(0,0,c.width,c.height);
+    }
+    fb();
+    window.addEventListener('resize',fb);
+  }
+  
+  var glopt={antialias:false,alpha:false,preserveDrawingBuffer:true};
+  var gl=null;
+  try{gl=c.getContext('webgl',glopt)||c.getContext('experimental-webgl',glopt);}catch(e){}
+  if(!gl){fallback();return;}
+  
+  var W=0,H=0;
+  function size(){
+    var w=window.innerWidth,h=window.innerHeight;
+    var maxDim=w<680?760:1280;
+    var s=Math.min(1,maxDim/Math.max(w,h));
+    c.style.width=w+'px';
+    c.style.height=h+'px';
+    W=Math.max(2,Math.floor(w*s));
+    H=Math.max(2,Math.floor(h*s));
+    c.width=W;
+    c.height=H;
+    gl.viewport(0,0,W,H);
+  }
+  size();
+  window.addEventListener('resize',size);
+  
+  var vs='attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}';
+  var fs=['precision highp float;','uniform vec2 R;uniform float T;',
+   'float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453123);}',
+   'float noise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);',
+   ' float a=hash(i),b=hash(i+vec2(1.,0.)),c=hash(i+vec2(0.,1.)),d=hash(i+vec2(1.,1.));',
+   ' return mix(mix(a,b,f.x),mix(c,d,f.x),f.y);}',
+   'float fbm(vec2 p){float v=0.,a=.5;for(int i=0;i<6;i++){v+=a*noise(p);p*=2.02;a*=.5;}return v;}',
+   'void main(){',
+   ' vec2 uv=gl_FragCoord.xy/R;',
+   ' vec2 q=vec2(uv.x*3.*(R.x/R.y), uv.y*3. - T*1.6);',
+   ' float warp=fbm(q*1.5+vec2(0.,-T));',
+   ' float w=fbm(vec2(q.x+warp*0.6, q.y));',
+   ' float n=fbm(q*1.2+vec2(0.,-T*1.2));',
+   ' float flame=w*0.6+n*0.6;',
+   ' float grad=smoothstep(0.0,0.78,uv.y);',
+   ' float inten=flame-grad*1.32-pow(abs(uv.x-0.5)*1.35,3.0)*0.30;',
+   ' inten=clamp(inten,0.0,1.0);',
+   ' float f=inten;',
+   ' vec3 col=vec3(1.5*f,1.5*f*f,0.6*f*f*f*f)+vec3(pow(f,4.0));',
+   ' col*=0.5;',
+   ' gl_FragColor=vec4(col,1.0);',
+   '}'].join('\n');
+  
+  function sh(t,src){var s=gl.createShader(t);gl.shaderSource(s,src);gl.compileShader(s);return s;}
+  var prog=gl.createProgram();
+  gl.attachShader(prog,sh(gl.VERTEX_SHADER,vs));
+  gl.attachShader(prog,sh(gl.FRAGMENT_SHADER,fs));
+  gl.linkProgram(prog);
+  
+  if(!gl.getProgramParameter(prog,gl.LINK_STATUS)){fallback();return;}
+  gl.useProgram(prog);
+  
+  var b=gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER,b);
+  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);
+  
+  var loc=gl.getAttribLocation(prog,'p');
+  gl.enableVertexAttribArray(loc);
+  gl.vertexAttribPointer(loc,2,gl.FLOAT,false,0,0);
+  
+  var uR=gl.getUniformLocation(prog,'R'),uT=gl.getUniformLocation(prog,'T');
+  var start=performance.now();
+  
+  function frame(){
+    requestAnimationFrame(frame);
+    if(!running)return;
+    var t=(performance.now()-start)/1000*0.42;
+    gl.uniform2f(uR,W,H);
+    gl.uniform1f(uT,t);
+    gl.drawArrays(gl.TRIANGLES,0,3);
+  }
+  
+  document.addEventListener('visibilitychange',function(){running=!document.hidden;});
+  requestAnimationFrame(frame);
+})();
+
+</script>
+
+</body>
+</html>
