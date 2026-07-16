@@ -332,71 +332,45 @@ document.addEventListener('click', (e) => {
   }
 });
 
-// CARREGAR CSV DE TODAS AS ABAS (JAN-DEZ)
+// CARREGAR CSV PUBLICADO DIRETAMENTE
 async function loadFromGoogleSheets() {
   try {
-    document.getElementById('results-container').innerHTML = '<div class="loading"><span class="spinner"></span>Carregando escalas de todos os meses...</div>';
+    document.getElementById('results-container').innerHTML = '<div class="loading"><span class="spinner"></span>Carregando escalas...</div>';
     
-    const SHEET_ID = '1n2jcahuguW40SsSQ5r2UhH47kM5SNQlAPSF2V8UoWNo';
+    // Link CSV publicado - funciona sem CORS
+    const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTq7gkTFeC7stzGVvCOr3h7GkvaklQqIsYwaD29WOsInW3td9XnOGa9bnAXltr7JX0dkqBkWEiiHFYb/pub?gid=65303552&single=true&output=csv';
     
-    // Meses com seus nomes
-    const months = [
-      'JANEIRO', 'FEVEREIRO', 'MARÇO', 'ABRIL', 'MAIO', 'JUNHO',
-      'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'
-    ];
+    console.log('Carregando CSV publicado...');
+    const response = await fetch(csvUrl);
     
-    allData = [];
-    let successCount = 0;
-    
-    // Carregar cada mês
-    for (let i = 0; i < months.length; i++) {
-      try {
-        const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/query?tqx=out:csv&sheet=${encodeURIComponent(months[i])}`;
-        console.log(`Carregando ${months[i]}...`);
-        
-        const response = await fetch(url);
-        if (!response.ok) {
-          console.log(`⚠️ ${months[i]} não encontrado (HTTP ${response.status})`);
-          continue;
-        }
-        
-        const csvText = await response.text();
-        if (!csvText || csvText.length < 50 || csvText.includes('<!DOCTYPE')) {
-          console.log(`⚠️ ${months[i]} vazio ou inválido`);
-          continue;
-        }
-        
-        const monthData = parseCSVData(csvText);
-        if (monthData.length > 0) {
-          allData = allData.concat(monthData);
-          successCount++;
-          console.log(`✅ ${months[i]}: ${monthData.length} registros`);
-        }
-        
-      } catch (e) {
-        console.log(`⚠️ Erro ao carregar ${months[i]}:`, e.message);
-      }
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
     }
+    
+    const csvText = await response.text();
+    console.log('CSV recebido, tamanho:', csvText.length);
+    
+    if (!csvText || csvText.length < 50 || csvText.includes('<!DOCTYPE')) {
+      throw new Error('Resposta inválida ou vazia');
+    }
+    
+    allData = parseCSVData(csvText);
     
     if (allData.length === 0) {
-      console.warn('Nenhuma escala carregada. Usando dados de exemplo.');
-      allData = getExampleData();
-      setStatus(false);
-      showError('Não conseguiu carregar da planilha. Usando dados de exemplo.');
-    } else {
-      setStatus(true);
-      showSuccess(`${allData.length} escalas carregadas de ${successCount} meses!`);
+      throw new Error('Nenhum dado válido encontrado no CSV');
     }
     
+    setStatus(true);
     updateLocalDropdown();
+    showSuccess(`${allData.length} escalas carregadas com sucesso!`);
+    console.log('✅ Dados carregados:', allData.length, 'registros');
+    
     document.getElementById('results-container').innerHTML = '';
     
   } catch (error) {
-    console.error('❌ Erro geral:', error);
-    allData = getExampleData();
+    console.error('❌ Erro ao carregar:', error);
     setStatus(false);
     showError('Erro: ' + error.message);
-    updateLocalDropdown();
     document.getElementById('results-container').innerHTML = '';
   }
 }
