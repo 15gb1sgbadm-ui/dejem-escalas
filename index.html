@@ -50,6 +50,80 @@ main{padding:22px 28px;max-width:1400px;margin:0 auto}
 .filter-item input,
 .filter-item select{background:var(--s2);border:1px solid var(--b);border-radius:8px;color:var(--t);padding:9px 13px;font-family:'Barlow';font-size:13px;outline:none;transition:border .2s;min-width:180px;cursor:pointer}
 
+.filter-item input:focus,
+.filter-item select:focus{border-color:var(--red)}
+
+.filter-item select option{background:var(--s2);color:var(--t)}
+
+.btn-apply{display:flex;align-items:center;gap:6px;background:rgba(39,174,96,.2);border:1px solid rgba(39,174,96,.4);color:#4ADE80;border-radius:8px;padding:9px 16px;font-family:'Barlow';font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;white-space:nowrap}
+.btn-apply:hover{background:rgba(39,174,96,.35)}
+.btn-apply:disabled{opacity:.5;cursor:not-allowed}
+
+.btn-clear{display:flex;align-items:center;gap:6px;background:rgba(215,38,56,.15);border:1px solid rgba(215,38,56,.3);color:#FC8181;border-radius:8px;padding:9px 16px;font-family:'Barlow';font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;white-space:nowrap}
+.btn-clear:hover{background:rgba(215,38,56,.25);border-color:rgba(215,38,56,.5)}
+
+.alert{padding:14px 16px;border-radius:8px;margin-bottom:16px;font-size:12px;display:none;align-items:center;gap:8px}
+.alert-error{background:rgba(215,38,56,.15);border:1px solid rgba(215,38,56,.3);color:#FC8181}
+.alert-success{background:rgba(39,174,96,.15);border:1px solid rgba(39,174,96,.3);color:#4ADE80}
+
+.results-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px;margin-top:20px}
+
+.dejem-card{background:var(--s2);border:1px solid var(--b);border-radius:12px;padding:18px;position:relative;overflow:hidden}
+.dejem-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#E5687A,#E7B24B,#2FB98A)}
+
+.card-header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--b)}
+.card-id{font-family:'Barlow Condensed';font-size:18px;font-weight:800;color:var(--y)}
+.card-data{font-size:11px;color:var(--m);letter-spacing:1px}
+
+.card-row{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,.05)}
+.card-row:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+
+.card-label{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--m);font-weight:600;min-width:80px}
+.card-value{font-size:13px;color:var(--t);font-weight:500;word-break:break-word;text-align:right;flex:1}
+
+.card-militar{background:var(--s3);border-radius:6px;padding:12px;margin-top:12px;border-left:3px solid var(--y)}
+.card-militar-item{font-size:12px;color:var(--t);line-height:1.5}
+.card-militar-label{font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--m);font-weight:600;margin-bottom:6px;display:block}
+
+.empty-state{text-align:center;padding:60px 20px;color:var(--m)}
+.empty-state-icon{font-size:48px;margin-bottom:12px;opacity:.6}
+.empty-state-text{font-size:14px;color:var(--m);margin-bottom:8px}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:300;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+
+.modal-content{background:var(--s1);border:1px solid var(--b);border-radius:14px;max-width:600px;width:95%;padding:26px;position:relative;max-height:90vh;overflow-y:auto}
+
+.modal-close{position:absolute;top:14px;right:14px;background:none;border:none;color:var(--m);font-size:24px;cursor:pointer;transition:color .2s}
+.modal-close:hover{color:var(--red)}
+
+.modal-title{font-family:'Barlow Condensed';font-size:20px;font-weight:700;margin-bottom:20px;color:var(--t)}
+
+.upload-area{background:var(--s2);border:2px dashed var(--b);border-radius:10px;padding:24px;text-align:center;cursor:pointer;transition:all .3s;margin-bottom:20px}
+.upload-area:hover{border-color:var(--red);background:var(--s3)}
+.upload-area.dragover{border-color:var(--y);background:var(--s3)}
+
+.upload-icon{font-size:32px;margin-bottom:12px}
+.upload-text{font-size:13px;color:var(--t);margin-bottom:4px}
+.upload-hint{font-size:11px;color:var(--m)}
+
+input[type="file"]{display:none}
+
+/* LISTA DE ARQUIVOS */
+.files-list{background:var(--s2);border:1px solid var(--b);border-radius:10px;padding:16px;margin-bottom:20px}
+.files-header{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--m);font-weight:600;margin-bottom:12px;display:block}
+
+.file-item{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px;background:var(--s3);border-radius:6px;margin-bottom:8px}
+.file-item:last-child{margin-bottom:0}
+
+.file-name{font-size:12px;color:var(--t);font-weight:500;flex:1;word-break:break-word}
+.file-records{font-size:10px;color:var(--m);white-space:nowrap}
+.file-delete{background:rgba(215,38,56,.2);border:1px solid rgba(215,38,56,.3);color:#FC8181;padding:4px 10px;border-radius:4px;font-size:10px;cursor:pointer;font-weight:600;transition:all .2s;white-space:nowrap}
+.file-delete:hover{background:rgba(215,38,56,.35);border-color:rgba(215,38,56,.5)}
+
+.empty-files{font-size:12px;color:var(--m);text-align:center;padding:20px 0}
+
 /* CALENDÁRIO */
 .date-picker-wrapper{position:relative;display:inline-block;width:100%}
 
@@ -82,74 +156,6 @@ main{padding:22px 28px;max-width:1400px;margin:0 auto}
 .calendar-day:not(.empty):not(.other-month):hover{background:rgba(245,166,35,.2);border-color:rgba(245,166,35,.3);color:var(--y)}
 
 .calendar-day.selected{background:rgba(215,38,56,.3);border-color:rgba(215,38,56,.5);color:var(--red);font-weight:700}
-
-.filter-item input:focus,
-.filter-item select:focus{border-color:var(--red)}
-
-.filter-item select option{background:var(--s2);color:var(--t)}
-
-.btn-apply{display:flex;align-items:center;gap:6px;background:rgba(39,174,96,.2);border:1px solid rgba(39,174,96,.4);color:#4ADE80;border-radius:8px;padding:9px 16px;font-family:'Barlow';font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;white-space:nowrap}
-.btn-apply:hover{background:rgba(39,174,96,.35)}
-.btn-apply:disabled{opacity:.5;cursor:not-allowed}
-
-.btn-clear{display:flex;align-items:center;gap:6px;background:rgba(215,38,56,.15);border:1px solid rgba(215,38,56,.3);color:#FC8181;border-radius:8px;padding:9px 16px;font-family:'Barlow';font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;white-space:nowrap}
-.btn-clear:hover{background:rgba(215,38,56,.25);border-color:rgba(215,38,56,.5)}
-
-.btn-clear-data{display:flex;align-items:center;gap:6px;background:rgba(215,38,56,.15);border:1px solid rgba(215,38,56,.3);color:#FC8181;border-radius:8px;padding:9px 16px;font-family:'Barlow';font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;width:100%;justify-content:center;margin-top:16px}
-.btn-clear-data:hover{background:rgba(215,38,56,.25);border-color:rgba(215,38,56,.5)}
-
-.alert{padding:14px 16px;border-radius:8px;margin-bottom:16px;font-size:12px;display:none;align-items:center;gap:8px}
-.alert-error{background:rgba(215,38,56,.15);border:1px solid rgba(215,38,56,.3);color:#FC8181}
-.alert-success{background:rgba(39,174,96,.15);border:1px solid rgba(39,174,96,.3);color:#4ADE80}
-
-.results-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px;margin-top:20px}
-
-.dejem-card{background:var(--s2);border:1px solid var(--b);border-radius:12px;padding:18px;position:relative;overflow:hidden}
-.dejem-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#E5687A,#E7B24B,#2FB98A)}
-
-.card-header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--b)}
-.card-id{font-family:'Barlow Condensed';font-size:18px;font-weight:800;color:var(--y)}
-.card-data{font-size:11px;color:var(--m);letter-spacing:1px}
-
-.card-row{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,.05)}
-.card-row:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
-
-.card-label{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--m);font-weight:600;min-width:80px}
-.card-value{font-size:13px;color:var(--t);font-weight:500;word-break:break-word;text-align:right;flex:1}
-
-.card-militar{background:var(--s3);border-radius:6px;padding:12px;margin-top:12px;border-left:3px solid var(--y)}
-.card-militar-item{font-size:12px;color:var(--t);line-height:1.5}
-.card-militar-label{font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--m);font-weight:600;margin-bottom:6px;display:block}
-
-.loading{text-align:center;padding:40px 20px;color:var(--m)}
-.spinner{display:inline-block;width:20px;height:20px;border:2px solid var(--b);border-top-color:var(--red);border-radius:50%;animation:spin .8s linear infinite;margin-right:8px;vertical-align:middle}
-
-@keyframes spin{to{transform:rotate(360deg)}}
-
-.empty-state{text-align:center;padding:60px 20px;color:var(--m)}
-.empty-state-icon{font-size:48px;margin-bottom:12px;opacity:.6}
-.empty-state-text{font-size:14px;color:var(--m);margin-bottom:8px}
-
-/* MODAL */
-.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:300;align-items:center;justify-content:center}
-.modal-overlay.open{display:flex}
-
-.modal-content{background:var(--s1);border:1px solid var(--b);border-radius:14px;max-width:600px;width:95%;padding:26px;position:relative;max-height:90vh;overflow-y:auto}
-
-.modal-close{position:absolute;top:14px;right:14px;background:none;border:none;color:var(--m);font-size:24px;cursor:pointer;transition:color .2s}
-.modal-close:hover{color:var(--red)}
-
-.modal-title{font-family:'Barlow Condensed';font-size:20px;font-weight:700;margin-bottom:20px;color:var(--t)}
-
-.upload-area{background:var(--s2);border:2px dashed var(--b);border-radius:10px;padding:24px;text-align:center;cursor:pointer;transition:all .3s;margin-bottom:20px}
-.upload-area:hover{border-color:var(--red);background:var(--s3)}
-.upload-area.dragover{border-color:var(--y);background:var(--s3)}
-
-.upload-icon{font-size:32px;margin-bottom:12px}
-.upload-text{font-size:13px;color:var(--t);margin-bottom:4px}
-.upload-hint{font-size:11px;color:var(--m)}
-
-input[type="file"]{display:none}
 
 @media(max-width:768px){
   header{padding:12px 16px;flex-direction:column;align-items:flex-start}
@@ -245,7 +251,12 @@ input[type="file"]{display:none}
       <input type="file" id="file-input" accept=".csv" multiple>
     </div>
 
-    <button class="btn-clear-data" onclick="clearAllData()">🗑️ Limpar Todos os Dados Salvos</button>
+    <div id="files-container" style="display:none">
+      <span class="files-header">Arquivos Carregados</span>
+      <div id="files-list-items"></div>
+    </div>
+
+    <div id="empty-files-msg" class="empty-files">Nenhum arquivo carregado</div>
   </div>
 </div>
 
@@ -255,112 +266,7 @@ let loadedFiles = new Map();
 let currentCalendarDate = new Date();
 let selectedDate = null;
 
-// IndexedDB
-const DB_NAME = 'DEJEMDashboard';
-const STORE_NAME = 'csvFiles';
-let db;
-
-function initDB() {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, 1);
-    
-    request.onerror = () => {
-      console.error('Erro ao abrir IndexedDB');
-      reject();
-    };
-    
-    request.onsuccess = () => {
-      db = request.result;
-      console.log('IndexedDB inicializado');
-      resolve();
-    };
-    
-    request.onupgradeneeded = (event) => {
-      const db = event.target.result;
-      if (!db.objectStoreNames.contains(STORE_NAME)) {
-        db.createObjectStore(STORE_NAME, { keyPath: 'fileName' });
-      }
-    };
-  });
-}
-
-function saveCSVtoDB(fileName, csvText) {
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction([STORE_NAME], 'readwrite');
-    const store = transaction.objectStore(STORE_NAME);
-    store.put({ fileName, csvText, timestamp: Date.now() });
-    
-    transaction.oncomplete = () => {
-      console.log(`${fileName} salvo em IndexedDB`);
-      resolve();
-    };
-    
-    transaction.onerror = () => {
-      console.error('Erro ao salvar em IndexedDB');
-      reject();
-    };
-  });
-}
-
-function loadCSVsFromDB() {
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction([STORE_NAME], 'readonly');
-    const store = transaction.objectStore(STORE_NAME);
-    const request = store.getAll();
-    
-    request.onsuccess = () => {
-      resolve(request.result);
-    };
-    
-    request.onerror = () => {
-      console.error('Erro ao carregar de IndexedDB');
-      reject([]);
-    };
-  });
-}
-
-function deleteCSVFromDB(fileName) {
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction([STORE_NAME], 'readwrite');
-    const store = transaction.objectStore(STORE_NAME);
-    const request = store.delete(fileName);
-    
-    request.onsuccess = () => {
-      console.log(`${fileName} deletado de IndexedDB`);
-      resolve();
-    };
-    
-    request.onerror = () => {
-      reject();
-    };
-  });
-}
-
-async function restoreCSVsOnLoad() {
-  try {
-    const files = await loadCSVsFromDB();
-    
-    if (files.length > 0) {
-      for (const file of files) {
-        const parsed = parseCSV(file.csvText, file.fileName);
-        if (parsed.length > 0) {
-          loadedFiles.set(file.fileName, parsed);
-          allData = Array.from(loadedFiles.values()).flat();
-        }
-      }
-      
-      updateLocalDropdown();
-      console.log(`${files.length} arquivo(s) restaurado(s) de IndexedDB`);
-    }
-  } catch (error) {
-    console.error('Erro ao restaurar CSVs:', error);
-  }
-}
-
-window.addEventListener('load', async () => {
-  await initDB();
-  await restoreCSVsOnLoad();
-});
+const STORAGE_KEY = 'dejem_csv_files';
 
 function updateClock() {
   const now = new Date();
@@ -372,114 +278,6 @@ function updateClock() {
 
 updateClock();
 setInterval(updateClock, 1000);
-
-// CALENDÁRIO
-function renderCalendar() {
-  const year = currentCalendarDate.getFullYear();
-  const month = currentCalendarDate.getMonth();
-  
-  // Atualizar título
-  const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
-    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
-  document.getElementById('calendar-title').textContent = `${monthNames[month]} ${year}`;
-  
-  // Limpar grid
-  const grid = document.getElementById('calendar-grid');
-  grid.innerHTML = '';
-  
-  // Headers de dias da semana
-  const dayHeaders = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'];
-  dayHeaders.forEach(day => {
-    const header = document.createElement('div');
-    header.className = 'calendar-day-header';
-    header.textContent = day;
-    grid.appendChild(header);
-  });
-  
-  // Primeiro dia do mês
-  const firstDay = new Date(year, month, 1).getDay();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const daysInPrevMonth = new Date(year, month, 0).getDate();
-  
-  // Dias do mês anterior
-  for (let i = firstDay - 1; i >= 0; i--) {
-    const day = document.createElement('div');
-    day.className = 'calendar-day other-month';
-    day.textContent = daysInPrevMonth - i;
-    grid.appendChild(day);
-  }
-  
-  // Dias do mês atual
-  const today = new Date();
-  for (let i = 1; i <= daysInMonth; i++) {
-    const day = document.createElement('div');
-    day.className = 'calendar-day';
-    day.textContent = i;
-    
-    const date = new Date(year, month, i);
-    
-    // Marcar hoje
-    if (date.toDateString() === today.toDateString()) {
-      day.classList.add('today');
-    }
-    
-    // Marcar selecionado
-    if (selectedDate && date.toDateString() === selectedDate.toDateString()) {
-      day.classList.add('selected');
-    }
-    
-    day.addEventListener('click', () => selectDate(date));
-    grid.appendChild(day);
-  }
-  
-  // Dias do mês próximo
-  const remainingDays = 42 - (firstDay + daysInMonth);
-  for (let i = 1; i <= remainingDays; i++) {
-    const day = document.createElement('div');
-    day.className = 'calendar-day other-month';
-    day.textContent = i;
-    grid.appendChild(day);
-  }
-}
-
-function selectDate(date) {
-  selectedDate = date;
-  const dateStr = date.toISOString().split('T')[0]; // YYYY-MM-DD
-  document.getElementById('filter-date').value = dateStr;
-  renderCalendar();
-  closeCalendar();
-  applyFilters();
-}
-
-function prevMonth() {
-  currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1);
-  renderCalendar();
-}
-
-function nextMonth() {
-  currentCalendarDate.setMonth(currentCalendarDate.getMonth() + 1);
-  renderCalendar();
-}
-
-function openCalendar() {
-  document.getElementById('calendar-popup').classList.add('show');
-  renderCalendar();
-}
-
-function closeCalendar() {
-  document.getElementById('calendar-popup').classList.remove('show');
-}
-
-document.getElementById('filter-date').addEventListener('click', openCalendar);
-
-document.addEventListener('click', (e) => {
-  const dateInput = document.getElementById('filter-date');
-  const calendarPopup = document.getElementById('calendar-popup');
-  
-  if (!e.target.closest('.date-picker-wrapper')) {
-    closeCalendar();
-  }
-});
 
 function showError(msg) {
   const el = document.getElementById('alert-error');
@@ -509,6 +307,103 @@ document.getElementById('config-modal').addEventListener('click', (e) => {
   }
 });
 
+// CALENDÁRIO
+function renderCalendar() {
+  const year = currentCalendarDate.getFullYear();
+  const month = currentCalendarDate.getMonth();
+  
+  const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+  document.getElementById('calendar-title').textContent = `${monthNames[month]} ${year}`;
+  
+  const grid = document.getElementById('calendar-grid');
+  grid.innerHTML = '';
+  
+  const dayHeaders = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'];
+  dayHeaders.forEach(day => {
+    const header = document.createElement('div');
+    header.className = 'calendar-day-header';
+    header.textContent = day;
+    grid.appendChild(header);
+  });
+  
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const daysInPrevMonth = new Date(year, month, 0).getDate();
+  
+  for (let i = firstDay - 1; i >= 0; i--) {
+    const day = document.createElement('div');
+    day.className = 'calendar-day other-month';
+    day.textContent = daysInPrevMonth - i;
+    grid.appendChild(day);
+  }
+  
+  const today = new Date();
+  for (let i = 1; i <= daysInMonth; i++) {
+    const day = document.createElement('div');
+    day.className = 'calendar-day';
+    day.textContent = i;
+    
+    const date = new Date(year, month, i);
+    
+    if (date.toDateString() === today.toDateString()) {
+      day.classList.add('today');
+    }
+    
+    if (selectedDate && date.toDateString() === selectedDate.toDateString()) {
+      day.classList.add('selected');
+    }
+    
+    day.addEventListener('click', () => selectDate(date));
+    grid.appendChild(day);
+  }
+  
+  const remainingDays = 42 - (firstDay + daysInMonth);
+  for (let i = 1; i <= remainingDays; i++) {
+    const day = document.createElement('div');
+    day.className = 'calendar-day other-month';
+    day.textContent = i;
+    grid.appendChild(day);
+  }
+}
+
+function selectDate(date) {
+  selectedDate = date;
+  const dateStr = date.toISOString().split('T')[0];
+  document.getElementById('filter-date').value = dateStr;
+  renderCalendar();
+  closeCalendar();
+  applyFilters();
+}
+
+function prevMonth() {
+  currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1);
+  renderCalendar();
+}
+
+function nextMonth() {
+  currentCalendarDate.setMonth(currentCalendarDate.getMonth() + 1);
+  renderCalendar();
+}
+
+function openCalendar() {
+  document.getElementById('calendar-popup').classList.add('show');
+  renderCalendar();
+}
+
+function closeCalendar() {
+  document.getElementById('calendar-popup').classList.remove('show');
+}
+
+document.getElementById('filter-date').addEventListener('click', openCalendar);
+
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.date-picker-wrapper')) {
+    closeCalendar();
+  }
+});
+
+// CSV PARSING
 function parseCSV(csvText, fileName) {
   const lines = csvText.trim().split('\n');
   if (lines.length < 7) return [];
@@ -627,6 +522,7 @@ function parseEscalado(escaladoStr) {
   return militares;
 }
 
+// UPLOAD & STORAGE
 const uploadArea = document.getElementById('upload-area');
 const fileInput = document.getElementById('file-input');
 
@@ -652,7 +548,7 @@ function handleFiles(files) {
     }
 
     const reader = new FileReader();
-    reader.onload = async (e) => {
+    reader.onload = (e) => {
       try {
         const csvText = e.target.result;
         const parsed = parseCSV(csvText, file.name);
@@ -662,18 +558,12 @@ function handleFiles(files) {
           return;
         }
 
-        // Deletar versão anterior se existir
-        if (loadedFiles.has(file.name)) {
-          await deleteCSVFromDB(file.name);
-        }
-
         loadedFiles.set(file.name, parsed);
         allData = Array.from(loadedFiles.values()).flat();
 
-        // Salvar em IndexedDB
-        await saveCSVtoDB(file.name, csvText);
-
+        saveToLocalStorage();
         updateLocalDropdown();
+        updateFilesList();
         showSuccess(`${file.name} carregado com ${parsed.length} registros.`);
         applyFilters();
 
@@ -684,6 +574,74 @@ function handleFiles(files) {
     };
     reader.readAsText(file);
   }
+}
+
+function saveToLocalStorage() {
+  const data = {};
+  loadedFiles.forEach((parsed, fileName) => {
+    data[fileName] = parsed;
+  });
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+function loadFromLocalStorage() {
+  const stored = localStorage.getItem(STORAGE_KEY);
+  if (stored) {
+    try {
+      const data = JSON.parse(stored);
+      loadedFiles.clear();
+      Object.entries(data).forEach(([fileName, parsed]) => {
+        loadedFiles.set(fileName, parsed);
+      });
+      allData = Array.from(loadedFiles.values()).flat();
+      updateLocalDropdown();
+      updateFilesList();
+    } catch (error) {
+      console.error('Erro ao carregar localStorage:', error);
+    }
+  }
+}
+
+function deleteFile(fileName) {
+  if (!confirm(`Tem certeza que deseja deletar "${fileName}"?`)) {
+    return;
+  }
+
+  loadedFiles.delete(fileName);
+  allData = Array.from(loadedFiles.values()).flat();
+  
+  saveToLocalStorage();
+  updateLocalDropdown();
+  updateFilesList();
+  document.getElementById('results-container').innerHTML = '';
+  showSuccess(`${fileName} removido.`);
+}
+
+function updateFilesList() {
+  const container = document.getElementById('files-container');
+  const list = document.getElementById('files-list-items');
+  const emptyMsg = document.getElementById('empty-files-msg');
+
+  if (loadedFiles.size === 0) {
+    container.style.display = 'none';
+    emptyMsg.style.display = 'block';
+    return;
+  }
+
+  container.style.display = 'block';
+  emptyMsg.style.display = 'none';
+  list.innerHTML = '';
+
+  loadedFiles.forEach((data, fileName) => {
+    const item = document.createElement('div');
+    item.className = 'file-item';
+    item.innerHTML = `
+      <span class="file-name">${fileName}</span>
+      <span class="file-records">${data.length} registros</span>
+      <button class="file-delete" onclick="deleteFile('${fileName.replace(/'/g, "\\'")}')">Deletar</button>
+    `;
+    list.appendChild(item);
+  });
 }
 
 function updateLocalDropdown() {
@@ -760,31 +718,6 @@ function clearFilters() {
   showSuccess('Filtros limpos.');
 }
 
-async function clearAllData() {
-  if (!confirm('Tem certeza que deseja limpar TODOS os arquivos salvos? Esta ação não pode ser desfeita.')) {
-    return;
-  }
-
-  try {
-    const files = await loadCSVsFromDB();
-    
-    for (const file of files) {
-      await deleteCSVFromDB(file.fileName);
-    }
-    
-    allData = [];
-    loadedFiles.clear();
-    updateLocalDropdown();
-    document.getElementById('results-container').innerHTML = '';
-    closeConfigModal();
-    showSuccess('Todos os dados foram limpos.');
-    
-  } catch (error) {
-    console.error('Erro ao limpar dados:', error);
-    showError('Erro ao limpar dados.');
-  }
-}
-
 function renderResults(data) {
   const container = document.getElementById('results-container');
 
@@ -856,6 +789,7 @@ function renderResults(data) {
   container.innerHTML = html;
 }
 
+// FUNDO ANIMADO
 (function(){
   var c=document.getElementById('fireCanvas');
   if(!c) return;
@@ -954,6 +888,8 @@ function renderResults(data) {
   requestAnimationFrame(frame);
 })();
 
+// INIT - CARREGAR DADOS SALVOS
+window.addEventListener('load', loadFromLocalStorage);
 </script>
 
 </body>
