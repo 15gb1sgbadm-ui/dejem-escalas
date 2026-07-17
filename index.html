@@ -333,10 +333,9 @@ document.addEventListener('click', (e) => {
 });
 
 // FONTE DE DADOS: CSV publicado direto do Google Sheets (sem backend — GitHub Pages é 100% estático)
-// Principal: link "Publicar na Web" configurado manualmente.
-// Fallback: endpoint gviz da planilha original, usado automaticamente se o link principal cair.
+// Usa SOMENTE o link publicado abaixo. Sem fallback para a planilha original — isso evitava que
+// meses fora do link publicado (ex.: Janeiro, já vencido) aparecessem misturados no painel.
 const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTq7gkTFeC7stzGVvCOr3h7GkvaklQqIsYwaD29WOsInW3td9XnOGa9bnAXltr7JX0dkqBkWEiiHFYb/pub?output=csv';
-const CSV_FALLBACK_URL = 'https://docs.google.com/spreadsheets/d/1n2jcahuguW40SsSQ5r2UhH47kM5SNQlAPSF2V8UoWNo/gviz/tq?tqx=out:csv';
 
 async function fetchCSV(url) {
   const bust = url.includes('?') ? '&' : '?';
@@ -352,14 +351,8 @@ async function loadFromGoogleSheets() {
   try {
     document.getElementById('results-container').innerHTML = '<div class="loading"><span class="spinner"></span>Carregando escalas...</div>';
 
-    let csvText;
-    try {
-      console.log('Buscando CSV publicado...');
-      csvText = await fetchCSV(CSV_URL);
-    } catch (e1) {
-      console.warn('URL principal falhou, tentando fallback:', e1.message);
-      csvText = await fetchCSV(CSV_FALLBACK_URL);
-    }
+    console.log('Buscando CSV publicado...');
+    const csvText = await fetchCSV(CSV_URL);
     console.log('CSV recebido, tamanho:', csvText.length);
 
     allData = parseCSVData(csvText);
