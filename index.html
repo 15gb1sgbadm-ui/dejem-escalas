@@ -332,36 +332,56 @@ document.addEventListener('click', (e) => {
   }
 });
 
-// FONTE DE DADOS: CSV publicado direto do Google Sheets (sem backend — GitHub Pages é 100% estático)
-// Usa SOMENTE o link publicado abaixo. Sem fallback para a planilha original — isso evitava que
-// meses fora do link publicado (ex.: Janeiro, já vencido) aparecessem misturados no painel.
-const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTq7gkTFeC7stzGVvCOr3h7GkvaklQqIsYwaD29WOsInW3td9XnOGa9bnAXltr7JX0dkqBkWEiiHFYb/pub?output=csv';
+// FONTE DE DADOS: direto do Google Sheets (sem backend — GitHub Pages é 100% estático)
+// Não usa mais "Publicar na Web" (o link publicava o documento inteiro, sem formato CSV
+// válido, e por isso retornava HTTP 400). Em vez disso busca cada aba de mês pelo nome via
+// gviz — o mesmo mecanismo de compartilhamento normal (visualizador) que já está ativo e
+// funcionando, sem precisar republicar nada na planilha.
+const DOC_ID = '1n2jcahuguW40SsSQ5r2UhH47kM5SNQlAPSF2V8UoWNo';
+const SHEET_NAMES = ['JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ']; // apenas os meses solicitados
 
-async function fetchCSV(url) {
-  const bust = url.includes('?') ? '&' : '?';
-  const resp = await fetch(url + bust + '_t=' + Date.now());
-  if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+async function fetchSheetCSV(sheetName) {
+  const url = `https://docs.google.com/spreadsheets/d/${DOC_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheetName)}&_t=${Date.now()}`;
+  const resp = await fetch(url);
+  if (!resp.ok) throw new Error(`HTTP ${resp.status} (aba ${sheetName})`);
   const text = await resp.text();
-  if (!text || text.length < 50) throw new Error('CSV vazio ou inválido');
+  if (!text || text.length < 20) throw new Error(`CSV vazio (aba ${sheetName})`);
   return text;
 }
 
-// CARREGAR CSV DIRETO DO GOOGLE SHEETS
+// CARREGAR TODAS AS ABAS DE MÊS E MESCLAR
 async function loadFromGoogleSheets() {
   try {
     document.getElementById('results-container').innerHTML = '<div class="loading"><span class="spinner"></span>Carregando escalas...</div>';
 
-    console.log('Buscando CSV publicado...');
-    const csvText = await fetchCSV(CSV_URL);
-    console.log('CSV recebido, tamanho:', csvText.length);
+    console.log('Buscando abas:', SHEET_NAMES.join(', '));
+    const results = await Promise.allSettled(SHEET_NAMES.map(fetchSheetCSV));
 
-    allData = parseCSVData(csvText);
+    let combined = [];
+    const failedSheets = [];
+    results.forEach((r, i) => {
+      const sheetName = SHEET_NAMES[i];
+      if (r.status === 'fulfilled') {
+        const parsed = parseCSVData(r.value);
+        console.log(`Aba ${sheetName}: ${parsed.length} registros`);
+        combined = combined.concat(parsed);
+      } else {
+        console.warn(`Falha ao carregar aba ${sheetName}:`, r.reason.message);
+        failedSheets.push(sheetName);
+      }
+    });
+
+    allData = combined;
 
     if (allData.length === 0) {
       console.warn('Nenhum dado encontrado. Usando exemplo.');
       allData = getExampleData();
       setStatus(false);
       showError('Nenhuma escala encontrada (usando dados de exemplo)');
+    } else if (failedSheets.length > 0) {
+      setStatus(false);
+      showError(`${allData.length} escalas carregadas, mas falhou: ${failedSheets.join(', ')}`);
+      console.log('✅ Dados carregados:', allData.length, 'registros (parcial)');
     } else {
       setStatus(true);
       showSuccess(`${allData.length} escalas carregadas!`);
