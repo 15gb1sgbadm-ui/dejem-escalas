@@ -163,7 +163,7 @@ main{padding:22px 28px;max-width:1400px;margin:0 auto}
       <label for="filter-id">ID</label>
       <input type="text" id="filter-id" placeholder="Ex: 8604016">
     </div>
-    
+
     <div class="filter-item">
       <label for="filter-date">Por Data</label>
       <div class="date-picker-wrapper">
@@ -182,7 +182,7 @@ main{padding:22px 28px;max-width:1400px;margin:0 auto}
         </div>
       </div>
     </div>
-    
+
     <div class="filter-item">
       <label for="filter-local">Por Local</label>
       <select id="filter-local">
@@ -230,7 +230,7 @@ function showSuccess(msg) {
 function setStatus(online) {
   const light = document.getElementById('status-light');
   const text = document.getElementById('status-text');
-  
+
   if (online) {
     light.classList.remove('offline');
     text.textContent = 'Conectado';
@@ -246,10 +246,10 @@ function renderCalendar() {
   const month = currentCalendarDate.getMonth();
   const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
   document.getElementById('calendar-title').textContent = `${monthNames[month]} ${year}`;
-  
+
   const grid = document.getElementById('calendar-grid');
   grid.innerHTML = '';
-  
+
   const dayHeaders = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'];
   dayHeaders.forEach(day => {
     const header = document.createElement('div');
@@ -257,37 +257,37 @@ function renderCalendar() {
     header.textContent = day;
     grid.appendChild(header);
   });
-  
+
   const firstDay = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const daysInPrevMonth = new Date(year, month, 0).getDate();
-  
+
   for (let i = firstDay - 1; i >= 0; i--) {
     const day = document.createElement('div');
     day.className = 'calendar-day other-month';
     day.textContent = daysInPrevMonth - i;
     grid.appendChild(day);
   }
-  
+
   const today = new Date();
   for (let i = 1; i <= daysInMonth; i++) {
     const day = document.createElement('div');
     day.className = 'calendar-day';
     day.textContent = i;
     const date = new Date(year, month, i);
-    
+
     if (date.toDateString() === today.toDateString()) {
       day.classList.add('today');
     }
-    
+
     if (selectedDate && date.toDateString() === selectedDate.toDateString()) {
       day.classList.add('selected');
     }
-    
+
     day.addEventListener('click', () => selectDate(date));
     grid.appendChild(day);
   }
-  
+
   const remainingDays = 42 - (firstDay + daysInMonth);
   for (let i = 1; i <= remainingDays; i++) {
     const day = document.createElement('div');
@@ -332,33 +332,38 @@ document.addEventListener('click', (e) => {
   }
 });
 
-// CARREGAR CSV VIA BACKEND (SEM CORS)
+// FONTE DE DADOS: CSV publicado direto do Google Sheets (sem backend — GitHub Pages é 100% estático)
+// Principal: link "Publicar na Web" configurado manualmente.
+// Fallback: endpoint gviz da planilha original, usado automaticamente se o link principal cair.
+const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTq7gkTFeC7stzGVvCOr3h7GkvaklQqIsYwaD29WOsInW3td9XnOGa9bnAXltr7JX0dkqBkWEiiHFYb/pub?output=csv';
+const CSV_FALLBACK_URL = 'https://docs.google.com/spreadsheets/d/1n2jcahuguW40SsSQ5r2UhH47kM5SNQlAPSF2V8UoWNo/gviz/tq?tqx=out:csv';
+
+async function fetchCSV(url) {
+  const bust = url.includes('?') ? '&' : '?';
+  const resp = await fetch(url + bust + '_t=' + Date.now());
+  if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+  const text = await resp.text();
+  if (!text || text.length < 50) throw new Error('CSV vazio ou inválido');
+  return text;
+}
+
+// CARREGAR CSV DIRETO DO GOOGLE SHEETS
 async function loadFromGoogleSheets() {
   try {
     document.getElementById('results-container').innerHTML = '<div class="loading"><span class="spinner"></span>Carregando escalas...</div>';
-    
-    console.log('Requisitando /api/escalas...');
-    const response = await fetch('/api/escalas');
-    
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
+
+    let csvText;
+    try {
+      console.log('Buscando CSV publicado...');
+      csvText = await fetchCSV(CSV_URL);
+    } catch (e1) {
+      console.warn('URL principal falhou, tentando fallback:', e1.message);
+      csvText = await fetchCSV(CSV_FALLBACK_URL);
     }
-    
-    const json = await response.json();
-    
-    if (!json.success) {
-      throw new Error(json.error || 'Erro na API');
-    }
-    
-    const csvText = json.data;
     console.log('CSV recebido, tamanho:', csvText.length);
-    
-    if (!csvText || csvText.length < 50) {
-      throw new Error('CSV vazio ou inválido');
-    }
-    
+
     allData = parseCSVData(csvText);
-    
+
     if (allData.length === 0) {
       console.warn('Nenhum dado encontrado. Usando exemplo.');
       allData = getExampleData();
@@ -366,19 +371,18 @@ async function loadFromGoogleSheets() {
       showError('Nenhuma escala encontrada (usando dados de exemplo)');
     } else {
       setStatus(true);
-      const cacheMsg = json.cached ? ' (em cache)' : '';
-      showSuccess(`${allData.length} escalas carregadas${cacheMsg}!`);
+      showSuccess(`${allData.length} escalas carregadas!`);
       console.log('✅ Dados carregados:', allData.length, 'registros');
     }
-    
+
     updateLocalDropdown();
     document.getElementById('results-container').innerHTML = '';
-    
+
   } catch (error) {
     console.error('❌ Erro ao carregar:', error);
     setStatus(false);
     showError('Erro: ' + error.message);
-    
+
     // Fallback para dados de exemplo
     allData = getExampleData();
     updateLocalDropdown();
@@ -425,15 +429,15 @@ function getExampleData() {
 function parseCSVData(csvText) {
   const lines = csvText.trim().split('\n');
   console.log('Total de linhas:', lines.length);
-  
+
   const data = [];
-  
+
   // Mostrar estrutura
   for (let i = 0; i < Math.min(10, lines.length); i++) {
     const cols = parseCSVLine(lines[i]);
     console.log(`Linha ${i}: ${cols.length} colunas | "${cols[0]}" | "${cols[1]}" | "${cols[2]}"`);
   }
-  
+
   // Começar a parsear a partir da linha que tiver "ID" ou similar
   let startRow = 0;
   for (let i = 0; i < lines.length; i++) {
@@ -444,13 +448,13 @@ function parseCSVData(csvText) {
       break;
     }
   }
-  
+
   // Se não encontrou, começa do começo
   if (startRow === 0) {
     startRow = 6; // padrão antigo
     console.log('Cabeçalho não encontrado, usando padrão linha 6');
   }
-  
+
   // Parsear dados
   for (let i = startRow; i < lines.length; i++) {
     const line = lines[i].trim();
@@ -479,7 +483,7 @@ function parseCSVData(csvText) {
         escalado,
         militares
       });
-      
+
       if (data.length <= 5) {
         console.log(`✅ Parsed linha ${i}:`, id, local);
       }
@@ -542,12 +546,12 @@ function parseEscalado(escaladoStr) {
     const matricula = tokens[0];
     const pmIdx = tokens.indexOf('PM');
     if (pmIdx === -1 || pmIdx < 2) return;
-    
+
     let patentStart = pmIdx - 1;
     if (pmIdx >= 3 && /^\d+\.$/.test(tokens[pmIdx - 2])) {
       patentStart = pmIdx - 2;
     }
-    
+
     const nome = tokens.slice(1, patentStart).join(' ');
     const patente = tokens.slice(patentStart).join(' ');
 
@@ -567,7 +571,7 @@ function updateLocalDropdown() {
   const locais = [...new Set(allData.map(d => d.local).filter(Boolean))].sort();
   const select = document.getElementById('filter-local');
   const currentValue = select.value;
-  
+
   select.innerHTML = '<option value="">-- Selecione --</option>';
   locais.forEach(local => {
     const opt = document.createElement('option');
@@ -681,7 +685,7 @@ function renderResults(data) {
     window.addEventListener('resize',fb);
     return;
   }
-  
+
   var W=0,H=0;
   function size(){
     var w=window.innerWidth,h=window.innerHeight;
@@ -697,7 +701,7 @@ function renderResults(data) {
   }
   size();
   window.addEventListener('resize',size);
-  
+
   var vs='attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}';
   var fs=['precision highp float;','uniform vec2 R;uniform float T;',
    'float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453123);}',
@@ -720,13 +724,13 @@ function renderResults(data) {
    ' col*=0.5;',
    ' gl_FragColor=vec4(col,1.0);',
    '}'].join('\n');
-  
+
   function sh(t,src){var s=gl.createShader(t);gl.shaderSource(s,src);gl.compileShader(s);return s;}
   var prog=gl.createProgram();
   gl.attachShader(prog,sh(gl.VERTEX_SHADER,vs));
   gl.attachShader(prog,sh(gl.FRAGMENT_SHADER,fs));
   gl.linkProgram(prog);
-  
+
   if(!gl.getProgramParameter(prog,gl.LINK_STATUS)){
     var x=c.getContext('2d');
     var fb=function(){
@@ -744,18 +748,18 @@ function renderResults(data) {
     return;
   }
   gl.useProgram(prog);
-  
+
   var b=gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER,b);
   gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);
-  
+
   var loc=gl.getAttribLocation(prog,'p');
   gl.enableVertexAttribArray(loc);
   gl.vertexAttribPointer(loc,2,gl.FLOAT,false,0,0);
-  
+
   var uR=gl.getUniformLocation(prog,'R'),uT=gl.getUniformLocation(prog,'T');
   var start=performance.now();
-  
+
   function frame(){
     requestAnimationFrame(frame);
     if(!running)return;
@@ -764,7 +768,7 @@ function renderResults(data) {
     gl.uniform1f(uT,t);
     gl.drawArrays(gl.TRIANGLES,0,3);
   }
-  
+
   document.addEventListener('visibilitychange',function(){running=!document.hidden;});
   requestAnimationFrame(frame);
 })();
