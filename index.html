@@ -43,7 +43,12 @@ header{background:linear-gradient(135deg,var(--rd) 0%,#1a0a0d 60%);border-bottom
 
 .status-indicator.offline{background:#FC8181;animation:none}
 
+.btn-config{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.08);border:1px solid var(--b);color:var(--t);border-radius:8px;padding:7px 12px;font-family:'Barlow';font-size:12px;font-weight:600;cursor:pointer;transition:all .2s}
+.btn-config:hover{background:rgba(255,255,255,.15)}
+
 main{padding:22px 28px;max-width:1400px;margin:0 auto}
+
+.fallback-banner{display:none;align-items:center;gap:8px;background:rgba(245,166,35,.15);border:1px solid rgba(245,166,35,.4);color:var(--y);border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:12px;font-weight:600}
 
 .filter-group{display:flex;gap:15px;flex-wrap:wrap;align-items:flex-end;margin-bottom:20px}
 .filter-item{display:flex;flex-direction:column;gap:5px}
@@ -113,6 +118,15 @@ main{padding:22px 28px;max-width:1400px;margin:0 auto}
 .calendar-day:not(.empty):not(.other-month):hover{background:rgba(245,166,35,.2);border-color:rgba(245,166,35,.3);color:var(--y)}
 .calendar-day.selected{background:rgba(215,38,56,.3);border-color:rgba(215,38,56,.5);color:var(--red);font-weight:700}
 
+.modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:300;align-items:center;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal-box{background:#12151f;border:1px solid var(--b);border-radius:12px;padding:24px;max-width:520px;width:90%;max-height:80vh;overflow-y:auto}
+.modal-box h3{font-family:'Barlow Condensed';font-size:18px;margin-bottom:6px;color:var(--t)}
+.modal-box p{font-size:12px;color:var(--m);margin-bottom:14px;line-height:1.5}
+.modal-box textarea{width:100%;min-height:140px;background:var(--s2);border:1px solid var(--b);border-radius:8px;color:var(--t);padding:10px;font-family:monospace;font-size:11px;resize:vertical}
+.modal-actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
+.modal-status{font-size:11px;color:var(--m);margin-top:10px}
+
 @media(max-width:768px){
   header{padding:12px 16px;flex-direction:column;align-items:flex-start}
   main{padding:16px}
@@ -136,6 +150,7 @@ main{padding:22px 28px;max-width:1400px;margin:0 auto}
     <div class="sub">Dashboard de Escalas</div>
   </div>
   <div class="hright">
+    <button class="btn-config" onclick="openConfigModal()">⚙️ Configurar</button>
     <div style="display:flex;align-items:center;gap:6px;font-size:10px;color:var(--m)">
       <span id="status-text">Conectado</span>
       <div class="status-indicator" id="status-light"></div>
@@ -155,6 +170,7 @@ main{padding:22px 28px;max-width:1400px;margin:0 auto}
 </header>
 
 <main>
+  <div class="fallback-banner" id="fallback-banner">⚠️ MODO BACKUP — sem conexão com o Google Sheets. Exibindo dados do CSV estático local. Podem estar desatualizados.</div>
   <div class="alert alert-error" id="alert-error"></div>
   <div class="alert alert-success" id="alert-success"></div>
 
@@ -197,6 +213,30 @@ main{padding:22px 28px;max-width:1400px;margin:0 auto}
   <div id="results-container"></div>
 </main>
 
+<div class="modal-overlay" id="config-modal">
+  <div class="modal-box">
+    <h3>⚙️ Configurar CSV de Backup Estático</h3>
+    <p>
+      Usado APENAS quando o painel não conseguir se conectar ao Google Sheets (as 6 abas
+      de mês falharem ao mesmo tempo). Nesse caso, em vez de mostrar dados de exemplo,
+      o painel usa este backup salvo neste navegador.<br><br>
+      Cole abaixo o conteúdo de um CSV com as mesmas colunas exportadas da planilha
+      (nesta ordem): <em>ID, Dia Sem., Data Hora Iní., Data Hora Tér., Data Lim. Inscr.,
+      AISP, Local, Convênio, Tipo de Escala, Escalado, ...</em>. Se as colunas não
+      baterem com essa ordem, o backup não vai ser lido corretamente.<br><br>
+      <strong>Atenção:</strong> este backup fica salvo só neste navegador/aparelho —
+      cada operador que quiser ter um backup próprio precisa colar o CSV aqui também.
+    </p>
+    <textarea id="config-csv-input" placeholder="Cole aqui o conteúdo do CSV..."></textarea>
+    <div class="modal-status" id="config-status"></div>
+    <div class="modal-actions">
+      <button class="btn-apply" onclick="saveStaticFallback()">💾 Salvar Backup</button>
+      <button class="btn-clear" onclick="removeStaticFallback()">🗑️ Remover Backup</button>
+      <button class="btn-config" onclick="closeConfigModal()">Fechar</button>
+    </div>
+  </div>
+</div>
+
 <script>
 let allData = [];
 let currentCalendarDate = new Date();
@@ -238,6 +278,57 @@ function setStatus(online) {
     light.classList.add('offline');
     text.textContent = 'Offline';
   }
+}
+
+function setFallbackBanner(show) {
+  document.getElementById('fallback-banner').style.display = show ? 'flex' : 'none';
+}
+
+// CONFIGURAÇÃO DO BACKUP ESTÁTICO (salvo no localStorage deste navegador)
+const FALLBACK_STORAGE_KEY = 'dejem_static_fallback_csv';
+
+function openConfigModal() {
+  const saved = localStorage.getItem(FALLBACK_STORAGE_KEY) || '';
+  document.getElementById('config-csv-input').value = saved;
+  updateConfigStatus();
+  document.getElementById('config-modal').classList.add('show');
+}
+
+function closeConfigModal() {
+  document.getElementById('config-modal').classList.remove('show');
+}
+
+function updateConfigStatus() {
+  const saved = localStorage.getItem(FALLBACK_STORAGE_KEY);
+  const el = document.getElementById('config-status');
+  if (saved) {
+    const linhas = saved.trim().split('\n').length;
+    el.textContent = `Backup salvo neste navegador (${linhas} linhas).`;
+  } else {
+    el.textContent = 'Nenhum backup salvo neste navegador ainda.';
+  }
+}
+
+function saveStaticFallback() {
+  const text = document.getElementById('config-csv-input').value.trim();
+  if (!text || text.length < 20) {
+    alert('Cole um CSV válido antes de salvar.');
+    return;
+  }
+  localStorage.setItem(FALLBACK_STORAGE_KEY, text);
+  updateConfigStatus();
+  showSuccess('Backup estático salvo neste navegador.');
+}
+
+function removeStaticFallback() {
+  localStorage.removeItem(FALLBACK_STORAGE_KEY);
+  document.getElementById('config-csv-input').value = '';
+  updateConfigStatus();
+  showSuccess('Backup estático removido.');
+}
+
+function getStaticFallback() {
+  return localStorage.getItem(FALLBACK_STORAGE_KEY);
 }
 
 // CALENDÁRIO
@@ -333,10 +424,8 @@ document.addEventListener('click', (e) => {
 });
 
 // FONTE DE DADOS: direto do Google Sheets (sem backend — GitHub Pages é 100% estático)
-// Não usa mais "Publicar na Web" (o link publicava o documento inteiro, sem formato CSV
-// válido, e por isso retornava HTTP 400). Em vez disso busca cada aba de mês pelo nome via
-// gviz — o mesmo mecanismo de compartilhamento normal (visualizador) que já está ativo e
-// funcionando, sem precisar republicar nada na planilha.
+// Busca cada aba de mês pelo nome via gviz, usando o mecanismo normal de compartilhamento
+// (visualizador) — sem depender de "Publicar na Web".
 const DOC_ID = '1n2jcahuguW40SsSQ5r2UhH47kM5SNQlAPSF2V8UoWNo';
 const SHEET_NAMES = ['JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ']; // apenas os meses solicitados
 
@@ -349,10 +438,18 @@ async function fetchSheetCSV(sheetName) {
   return text;
 }
 
-// CARREGAR TODAS AS ABAS DE MÊS E MESCLAR
+// Depois da primeira carga, as atualizações automáticas (setInterval) rodam em segundo
+// plano: renovam allData e o dropdown de locais, mas NÃO tocam no results-container.
+// Isso evita que uma escala já filtrada na tela suma sozinha a cada 30s. A tela só muda
+// de fato quando o operador aplica um filtro de novo (clica em Pesquisar/Limpar).
+let isInitialLoad = true;
+
+// CARREGAR TODAS AS ABAS DE MÊS E MESCLAR (com backup estático como último recurso)
 async function loadFromGoogleSheets() {
   try {
-    document.getElementById('results-container').innerHTML = '<div class="loading"><span class="spinner"></span>Carregando escalas...</div>';
+    if (isInitialLoad) {
+      document.getElementById('results-container').innerHTML = '<div class="loading"><span class="spinner"></span>Carregando escalas...</div>';
+    }
 
     console.log('Buscando abas:', SHEET_NAMES.join(', '));
     const results = await Promise.allSettled(SHEET_NAMES.map(fetchSheetCSV));
@@ -371,35 +468,93 @@ async function loadFromGoogleSheets() {
       }
     });
 
+    // Conexão falhou totalmente (as 6 abas falharam) = hora de tentar o backup estático.
+    const totalFailure = failedSheets.length === SHEET_NAMES.length;
+    let usingFallback = false;
+
+    if (totalFailure) {
+      const fallbackCsv = getStaticFallback();
+      if (fallbackCsv) {
+        try {
+          const parsedFallback = parseCSVData(fallbackCsv);
+          if (parsedFallback.length > 0) {
+            combined = parsedFallback;
+            usingFallback = true;
+            console.warn('Conexão com o Sheets falhou totalmente. Usando backup estático local.');
+          }
+        } catch (fbErr) {
+          console.warn('Backup estático inválido:', fbErr.message);
+        }
+      }
+    }
+
     allData = combined;
+    setFallbackBanner(usingFallback);
 
     if (allData.length === 0) {
       console.warn('Nenhum dado encontrado. Usando exemplo.');
       allData = getExampleData();
       setStatus(false);
-      showError('Nenhuma escala encontrada (usando dados de exemplo)');
+      if (isInitialLoad) {
+        showError(totalFailure
+          ? 'Sem conexão com o Sheets e nenhum backup configurado — exibindo dados de exemplo'
+          : 'Nenhuma escala encontrada (usando dados de exemplo)');
+      }
+    } else if (usingFallback) {
+      setStatus(false);
+      if (isInitialLoad) showSuccess(`${allData.length} escalas carregadas do backup estático (sem conexão com o Sheets).`);
+    } else if (totalFailure) {
+      setStatus(false);
+      if (isInitialLoad) showError('Sem conexão com o Sheets e nenhum backup configurado — exibindo dados de exemplo');
     } else if (failedSheets.length > 0) {
       setStatus(false);
-      showError(`${allData.length} escalas carregadas, mas falhou: ${failedSheets.join(', ')}`);
+      if (isInitialLoad) showError(`${allData.length} escalas carregadas, mas falhou: ${failedSheets.join(', ')}`);
       console.log('✅ Dados carregados:', allData.length, 'registros (parcial)');
     } else {
       setStatus(true);
-      showSuccess(`${allData.length} escalas carregadas!`);
+      if (isInitialLoad) showSuccess(`${allData.length} escalas carregadas!`);
       console.log('✅ Dados carregados:', allData.length, 'registros');
     }
 
     updateLocalDropdown();
-    document.getElementById('results-container').innerHTML = '';
+
+    if (isInitialLoad) {
+      document.getElementById('results-container').innerHTML = '';
+      isInitialLoad = false;
+    }
+    // Em atualizações seguintes (silenciosas), a tela com o filtro aplicado permanece
+    // intacta — allData já está atualizado e será usado na próxima vez que o operador
+    // clicar em Pesquisar. O banner de fallback, por ser um indicador de status (não um
+    // resultado de busca), é atualizado em toda atualização, mesmo em segundo plano.
 
   } catch (error) {
     console.error('❌ Erro ao carregar:', error);
     setStatus(false);
-    showError('Erro: ' + error.message);
 
-    // Fallback para dados de exemplo
-    allData = getExampleData();
-    updateLocalDropdown();
-    document.getElementById('results-container').innerHTML = '';
+    if (isInitialLoad) {
+      const fallbackCsv = getStaticFallback();
+      let usedFallback = false;
+      if (fallbackCsv) {
+        try {
+          const parsedFallback = parseCSVData(fallbackCsv);
+          if (parsedFallback.length > 0) {
+            allData = parsedFallback;
+            usedFallback = true;
+            setFallbackBanner(true);
+            showSuccess(`${allData.length} escalas carregadas do backup estático (erro: ${error.message}).`);
+          }
+        } catch (fbErr) {
+          console.warn('Backup estático inválido:', fbErr.message);
+        }
+      }
+      if (!usedFallback) {
+        showError('Erro: ' + error.message);
+        allData = getExampleData();
+      }
+      updateLocalDropdown();
+      document.getElementById('results-container').innerHTML = '';
+      isInitialLoad = false;
+    }
   }
 }
 
