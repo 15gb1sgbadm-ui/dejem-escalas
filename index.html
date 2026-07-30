@@ -514,7 +514,7 @@ function parseCSVData(csvText) {
     if (!line) continue;
 
     const cols = parseCSVLine(line);
-    if (cols.length < 3) continue; // precisa de pelo menos 3 colunas
+    if (cols.length < 3) continue;
 
     const id = cols[0] ? cols[0].trim() : '';
     const dataHoraInicio = cols[2] ? cols[2].trim() : '';
@@ -522,9 +522,15 @@ function parseCSVData(csvText) {
     const tipoEscala = cols[8] ? cols[8].trim() : '';
     const escalado = cols[9] ? cols[9].trim() : '';
 
-    // Aceitar mesmo sem todos os campos
     if (id) {
       const { data: dataParsed, hora } = parseDataHora(dataHoraInicio);
+      
+      // FILTRO: Descartar JAN-JUN (meses 01-06)
+      const mesData = dataParsed.split('/')[1];
+      if (mesData && parseInt(mesData) < 7) {
+        continue; // Pula registros de jan-jun
+      }
+      
       const militares = parseEscalado(escalado);
 
       data.push({
@@ -538,7 +544,7 @@ function parseCSVData(csvText) {
       });
       
       if (data.length <= 5) {
-        console.log(`✅ Parsed linha ${i}:`, id, local);
+        console.log(`✅ Parsed linha ${i}:`, id, local, 'Mês:', mesData);
       }
     }
   }
