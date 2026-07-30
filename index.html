@@ -386,7 +386,7 @@ async function loadFromGoogleSheets() {
     document.getElementById('results-container').innerHTML = '<div class="loading"><span class="spinner"></span>Carregando escalas...</div>';
     
     // URL CSV publicado direto do Google Sheets
-    const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTq7gkTFeC7stzGVvCOr3h7GkvaklQqIsYwaD29WOsInW3td9XnOGa9bnAXltr7JX0dkqBkWEiiHFYb/pub?gid=65303552&single=true&output=csv';
+    const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTq7gkTFeC7stzGVvCOr3h7GkvaklQqIsYwaD29WOsInW3td9XnOGa9bnAXltr7JX0dkqBkWEiiHFYb/pub?output=csv';
     
     console.log('Carregando CSV direto...');
     const response = await fetch(csvUrl);
