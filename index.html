@@ -43,7 +43,12 @@ header{background:linear-gradient(135deg,var(--rd) 0%,#1a0a0d 60%);border-bottom
 
 .status-indicator.offline{background:#FC8181;animation:none}
 
+.btn-config{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.08);border:1px solid var(--b);color:var(--t);border-radius:8px;padding:7px 12px;font-family:'Barlow';font-size:12px;font-weight:600;cursor:pointer;transition:all .2s}
+.btn-config:hover{background:rgba(255,255,255,.15)}
+
 main{padding:22px 28px;max-width:1400px;margin:0 auto}
+
+.fallback-banner{display:none;align-items:center;gap:8px;background:rgba(245,166,35,.15);border:1px solid rgba(245,166,35,.4);color:var(--y);border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:12px;font-weight:600}
 
 .filter-group{display:flex;gap:15px;flex-wrap:wrap;align-items:flex-end;margin-bottom:20px}
 .filter-item{display:flex;flex-direction:column;gap:5px}
@@ -97,9 +102,6 @@ main{padding:22px 28px;max-width:1400px;margin:0 auto}
 .empty-state-text{font-size:14px;color:var(--m);margin-bottom:8px}
 
 .date-picker-wrapper{position:relative;display:inline-block;width:100%}
-.date-range-wrapper{position:relative;display:flex;flex-direction:column;gap:8px;width:100%}
-.date-input{background:var(--s2);border:1px solid var(--b);border-radius:8px;color:var(--t);padding:9px 13px;font-family:'Barlow';font-size:13px;outline:none;transition:border .2s;cursor:pointer;flex:1}
-.date-input:focus{border-color:var(--red)}
 .calendar-popup{display:none;position:absolute;top:100%;left:0;background:var(--s1);border:1px solid var(--b);border-radius:10px;padding:16px;margin-top:8px;z-index:200;min-width:300px;box-shadow:0 10px 30px rgba(0,0,0,.5)}
 .calendar-popup.show{display:block}
 .calendar-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
@@ -115,7 +117,15 @@ main{padding:22px 28px;max-width:1400px;margin:0 auto}
 .calendar-day.today{background:rgba(39,174,96,.2);border-color:rgba(39,174,96,.4);color:#4ADE80}
 .calendar-day:not(.empty):not(.other-month):hover{background:rgba(245,166,35,.2);border-color:rgba(245,166,35,.3);color:var(--y)}
 .calendar-day.selected{background:rgba(215,38,56,.3);border-color:rgba(215,38,56,.5);color:var(--red);font-weight:700}
-.calendar-day.in-range{background:rgba(215,38,56,.15);color:var(--t)}
+
+.modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:300;align-items:center;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal-box{background:#12151f;border:1px solid var(--b);border-radius:12px;padding:24px;max-width:520px;width:90%;max-height:80vh;overflow-y:auto}
+.modal-box h3{font-family:'Barlow Condensed';font-size:18px;margin-bottom:6px;color:var(--t)}
+.modal-box p{font-size:12px;color:var(--m);margin-bottom:14px;line-height:1.5}
+.modal-box textarea{width:100%;min-height:140px;background:var(--s2);border:1px solid var(--b);border-radius:8px;color:var(--t);padding:10px;font-family:monospace;font-size:11px;resize:vertical}
+.modal-actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
+.modal-status{font-size:11px;color:var(--m);margin-top:10px}
 
 @media(max-width:768px){
   header{padding:12px 16px;flex-direction:column;align-items:flex-start}
@@ -140,6 +150,7 @@ main{padding:22px 28px;max-width:1400px;margin:0 auto}
     <div class="sub">Dashboard de Escalas</div>
   </div>
   <div class="hright">
+    <button class="btn-config" onclick="openConfigModal()">⚙️ Configurar</button>
     <div style="display:flex;align-items:center;gap:6px;font-size:10px;color:var(--m)">
       <span id="status-text">Conectado</span>
       <div class="status-indicator" id="status-light"></div>
@@ -159,6 +170,7 @@ main{padding:22px 28px;max-width:1400px;margin:0 auto}
 </header>
 
 <main>
+  <div class="fallback-banner" id="fallback-banner">⚠️ MODO BACKUP — sem conexão com o Google Sheets. Exibindo dados do CSV estático local. Podem estar desatualizados.</div>
   <div class="alert alert-error" id="alert-error"></div>
   <div class="alert alert-success" id="alert-success"></div>
 
@@ -167,15 +179,11 @@ main{padding:22px 28px;max-width:1400px;margin:0 auto}
       <label for="filter-id">ID</label>
       <input type="text" id="filter-id" placeholder="Ex: 8604016">
     </div>
-    
+
     <div class="filter-item">
-      <label for="filter-date">Por Data (Intervalo)</label>
-      <div class="date-range-wrapper">
-        <div style="display:flex;gap:8px;align-items:center;width:100%">
-          <input type="text" id="filter-date-inicio" placeholder="Data inicial" readonly class="date-input">
-          <span style="color:var(--m);font-size:12px">até</span>
-          <input type="text" id="filter-date-fim" placeholder="Data final" readonly class="date-input">
-        </div>
+      <label for="filter-date">Por Data</label>
+      <div class="date-picker-wrapper">
+        <input type="text" id="filter-date" placeholder="Clique para selecionar" readonly>
         <div class="calendar-popup" id="calendar-popup">
           <div class="calendar-header">
             <div class="calendar-nav">
@@ -187,13 +195,10 @@ main{padding:22px 28px;max-width:1400px;margin:0 auto}
             </div>
           </div>
           <div class="calendar-grid" id="calendar-grid"></div>
-          <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--b);text-align:center;font-size:11px;color:var(--m)">
-            <span id="calendar-info">Selecione a data inicial</span>
-          </div>
         </div>
       </div>
     </div>
-    
+
     <div class="filter-item">
       <label for="filter-local">Por Local</label>
       <select id="filter-local">
@@ -208,12 +213,34 @@ main{padding:22px 28px;max-width:1400px;margin:0 auto}
   <div id="results-container"></div>
 </main>
 
+<div class="modal-overlay" id="config-modal">
+  <div class="modal-box">
+    <h3>⚙️ Configurar CSV de Backup Estático</h3>
+    <p>
+      Usado APENAS quando o painel não conseguir se conectar ao Google Sheets (as 6 abas
+      de mês falharem ao mesmo tempo). Nesse caso, em vez de mostrar dados de exemplo,
+      o painel usa este backup salvo neste navegador.<br><br>
+      Cole abaixo o conteúdo de um CSV com as mesmas colunas exportadas da planilha
+      (nesta ordem): <em>ID, Dia Sem., Data Hora Iní., Data Hora Tér., Data Lim. Inscr.,
+      AISP, Local, Convênio, Tipo de Escala, Escalado, ...</em>. Se as colunas não
+      baterem com essa ordem, o backup não vai ser lido corretamente.<br><br>
+      <strong>Atenção:</strong> este backup fica salvo só neste navegador/aparelho —
+      cada operador que quiser ter um backup próprio precisa colar o CSV aqui também.
+    </p>
+    <textarea id="config-csv-input" placeholder="Cole aqui o conteúdo do CSV..."></textarea>
+    <div class="modal-status" id="config-status"></div>
+    <div class="modal-actions">
+      <button class="btn-apply" onclick="saveStaticFallback()">💾 Salvar Backup</button>
+      <button class="btn-clear" onclick="removeStaticFallback()">🗑️ Remover Backup</button>
+      <button class="btn-config" onclick="closeConfigModal()">Fechar</button>
+    </div>
+  </div>
+</div>
+
 <script>
 let allData = [];
 let currentCalendarDate = new Date();
-let selectedDateInicio = null;
-let selectedDateFim = null;
-let selectingFim = false; // flag para saber se está selecionando fim
+let selectedDate = null;
 
 function updateClock() {
   const now = new Date();
@@ -243,7 +270,7 @@ function showSuccess(msg) {
 function setStatus(online) {
   const light = document.getElementById('status-light');
   const text = document.getElementById('status-text');
-  
+
   if (online) {
     light.classList.remove('offline');
     text.textContent = 'Conectado';
@@ -253,16 +280,65 @@ function setStatus(online) {
   }
 }
 
-// CALENDÁRIO
+function setFallbackBanner(show) {
+  document.getElementById('fallback-banner').style.display = show ? 'flex' : 'none';
+}
+
+const FALLBACK_STORAGE_KEY = 'dejem_static_fallback_csv';
+
+function openConfigModal() {
+  const saved = localStorage.getItem(FALLBACK_STORAGE_KEY) || '';
+  document.getElementById('config-csv-input').value = saved;
+  updateConfigStatus();
+  document.getElementById('config-modal').classList.add('show');
+}
+
+function closeConfigModal() {
+  document.getElementById('config-modal').classList.remove('show');
+}
+
+function updateConfigStatus() {
+  const saved = localStorage.getItem(FALLBACK_STORAGE_KEY);
+  const el = document.getElementById('config-status');
+  if (saved) {
+    const linhas = saved.trim().split('\n').length;
+    el.textContent = `Backup salvo neste navegador (${linhas} linhas).`;
+  } else {
+    el.textContent = 'Nenhum backup salvo neste navegador ainda.';
+  }
+}
+
+function saveStaticFallback() {
+  const text = document.getElementById('config-csv-input').value.trim();
+  if (!text || text.length < 20) {
+    alert('Cole um CSV válido antes de salvar.');
+    return;
+  }
+  localStorage.setItem(FALLBACK_STORAGE_KEY, text);
+  updateConfigStatus();
+  showSuccess('Backup estático salvo neste navegador.');
+}
+
+function removeStaticFallback() {
+  localStorage.removeItem(FALLBACK_STORAGE_KEY);
+  document.getElementById('config-csv-input').value = '';
+  updateConfigStatus();
+  showSuccess('Backup estático removido.');
+}
+
+function getStaticFallback() {
+  return localStorage.getItem(FALLBACK_STORAGE_KEY);
+}
+
 function renderCalendar() {
   const year = currentCalendarDate.getFullYear();
   const month = currentCalendarDate.getMonth();
   const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
   document.getElementById('calendar-title').textContent = `${monthNames[month]} ${year}`;
-  
+
   const grid = document.getElementById('calendar-grid');
   grid.innerHTML = '';
-  
+
   const dayHeaders = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'];
   dayHeaders.forEach(day => {
     const header = document.createElement('div');
@@ -270,48 +346,37 @@ function renderCalendar() {
     header.textContent = day;
     grid.appendChild(header);
   });
-  
+
   const firstDay = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const daysInPrevMonth = new Date(year, month, 0).getDate();
-  
+
   for (let i = firstDay - 1; i >= 0; i--) {
     const day = document.createElement('div');
     day.className = 'calendar-day other-month';
     day.textContent = daysInPrevMonth - i;
     grid.appendChild(day);
   }
-  
+
   const today = new Date();
   for (let i = 1; i <= daysInMonth; i++) {
     const day = document.createElement('div');
     day.className = 'calendar-day';
     day.textContent = i;
     const date = new Date(year, month, i);
-    
+
     if (date.toDateString() === today.toDateString()) {
       day.classList.add('today');
     }
-    
-    // Destacar intervalo
-    if (selectedDateInicio && selectedDateFim) {
-      if (date >= selectedDateInicio && date <= selectedDateFim) {
-        day.classList.add('in-range');
-      }
-    }
-    
-    if (selectedDateInicio && date.toDateString() === selectedDateInicio.toDateString()) {
+
+    if (selectedDate && date.toDateString() === selectedDate.toDateString()) {
       day.classList.add('selected');
     }
-    
-    if (selectedDateFim && date.toDateString() === selectedDateFim.toDateString()) {
-      day.classList.add('selected');
-    }
-    
+
     day.addEventListener('click', () => selectDate(date));
     grid.appendChild(day);
   }
-  
+
   const remainingDays = 42 - (firstDay + daysInMonth);
   for (let i = 1; i <= remainingDays; i++) {
     const day = document.createElement('div');
@@ -322,35 +387,12 @@ function renderCalendar() {
 }
 
 function selectDate(date) {
-  if (!selectingFim) {
-    // Selecionando data inicial
-    selectedDateInicio = date;
-    selectedDateFim = null;
-    selectingFim = true;
-    
-    const dateStr = date.toISOString().split('T')[0];
-    document.getElementById('filter-date-inicio').value = dateStr;
-    document.getElementById('filter-date-fim').value = '';
-    document.getElementById('calendar-info').textContent = 'Agora selecione a data final';
-    
-    renderCalendar();
-  } else {
-    // Selecionando data final
-    if (date < selectedDateInicio) {
-      showError('A data final não pode ser anterior à data inicial!');
-      return;
-    }
-    
-    selectedDateFim = date;
-    selectingFim = false;
-    
-    const dateStr = date.toISOString().split('T')[0];
-    document.getElementById('filter-date-fim').value = dateStr;
-    document.getElementById('calendar-info').textContent = 'Intervalo selecionado! Clique "Pesquisar"';
-    
-    renderCalendar();
-    setTimeout(() => closeCalendar(), 500);
-  }
+  selectedDate = date;
+  const dateStr = date.toISOString().split('T')[0];
+  document.getElementById('filter-date').value = dateStr;
+  renderCalendar();
+  closeCalendar();
+  applyFilters();
 }
 
 function prevMonth() {
@@ -372,78 +414,135 @@ function closeCalendar() {
   document.getElementById('calendar-popup').classList.remove('show');
 }
 
-document.getElementById('filter-date-inicio')?.addEventListener('click', openCalendar);
-document.getElementById('filter-date-fim')?.addEventListener('click', openCalendar);
+document.getElementById('filter-date').addEventListener('click', openCalendar);
 document.addEventListener('click', (e) => {
-  if (!e.target.closest('.date-range-wrapper') && !e.target.closest('.calendar-popup')) {
+  if (!e.target.closest('.date-picker-wrapper')) {
     closeCalendar();
   }
 });
 
-// CARREGAR CSV PUBLICADO CONSOLIDADO (JUL-DEZ)
+const DOC_ID = '1n2jcahuguW40SsSQ5r2UhH47kM5SNQlAPSF2V8UoWNo';
+const SHEET_NAMES = ['JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
+
+async function fetchSheetCSV(sheetName) {
+  const url = `https://docs.google.com/spreadsheets/d/${DOC_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheetName)}&_t=${Date.now()}`;
+  const resp = await fetch(url);
+  if (!resp.ok) throw new Error(`HTTP ${resp.status} (aba ${sheetName})`);
+  const text = await resp.text();
+  if (!text || text.length < 20) throw new Error(`CSV vazio (aba ${sheetName})`);
+  return text;
+}
+
+let isInitialLoad = true;
+
 async function loadFromGoogleSheets() {
   try {
-    document.getElementById('results-container').innerHTML = '<div class="loading"><span class="spinner"></span>Carregando escalas de julho a dezembro...</div>';
-    
-    // Link CSV publicado - LINK EXATO DA PUBLICAÇÃO
-    const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTq7gkTFeC7stzGVvCOr3h7GkvaklQqIsYwaD29WOsInW3td9XnOGa9bnAXltr7JX0dkqBkWEiiHFYb/pub?output=csv';
-    
-    console.log('Carregando CSV publicado...');
-    const response = await fetch(csvUrl);
-    
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
+    if (isInitialLoad) {
+      document.getElementById('results-container').innerHTML = '<div class="loading"><span class="spinner"></span>Carregando escalas...</div>';
     }
-    
-    const csvText = await response.text();
-    console.log('CSV recebido, tamanho:', csvText.length, 'bytes');
-    console.log('Primeiras 200 caracteres:', csvText.substring(0, 200));
-    
-    if (!csvText || csvText.length < 10) {
-      throw new Error('CSV vazio ou inválido');
+
+    console.log('Buscando abas:', SHEET_NAMES.join(', '));
+    const results = await Promise.allSettled(SHEET_NAMES.map(fetchSheetCSV));
+
+    let combined = [];
+    const failedSheets = [];
+    results.forEach((r, i) => {
+      const sheetName = SHEET_NAMES[i];
+      if (r.status === 'fulfilled') {
+        const parsed = parseCSVData(r.value);
+        console.log(`Aba ${sheetName}: ${parsed.length} registros`);
+        combined = combined.concat(parsed);
+      } else {
+        console.warn(`Falha ao carregar aba ${sheetName}:`, r.reason.message);
+        failedSheets.push(sheetName);
+      }
+    });
+
+    const totalFailure = failedSheets.length === SHEET_NAMES.length;
+    let usingFallback = false;
+
+    if (totalFailure) {
+      const fallbackCsv = getStaticFallback();
+      if (fallbackCsv) {
+        try {
+          const parsedFallback = parseCSVData(fallbackCsv);
+          if (parsedFallback.length > 0) {
+            combined = parsedFallback;
+            usingFallback = true;
+            console.warn('Conexão com o Sheets falhou totalmente. Usando backup estático local.');
+          }
+        } catch (fbErr) {
+          console.warn('Backup estático inválido:', fbErr.message);
+        }
+      }
     }
-    
-    allData = parseCSVData(csvText);
-    console.log('Total parseado:', allData.length, 'registros');
-    
-    if (allData.length > 0) {
-      console.log('Primeiro registro:', allData[0]);
-    }
-    
+
+    allData = combined;
+    setFallbackBanner(usingFallback);
+
     if (allData.length === 0) {
-      console.warn('⚠️ Nenhum registro encontrado');
+      console.warn('Nenhum dado encontrado. Usando exemplo.');
       allData = getExampleData();
       setStatus(false);
-      showError('Nenhuma escala encontrada (usando dados de exemplo)');
+      if (isInitialLoad) {
+        showError(totalFailure
+          ? 'Sem conexão com o Sheets e nenhum backup configurado — exibindo dados de exemplo'
+          : 'Nenhuma escala encontrada (usando dados de exemplo)');
+      }
+    } else if (usingFallback) {
+      setStatus(false);
+      if (isInitialLoad) showSuccess(`${allData.length} escalas carregadas do backup estático (sem conexão com o Sheets).`);
+    } else if (totalFailure) {
+      setStatus(false);
+      if (isInitialLoad) showError('Sem conexão com o Sheets e nenhum backup configurado — exibindo dados de exemplo');
+    } else if (failedSheets.length > 0) {
+      setStatus(false);
+      if (isInitialLoad) showError(`${allData.length} escalas carregadas, mas falhou: ${failedSheets.join(', ')}`);
+      console.log('✅ Dados carregados:', allData.length, 'registros (parcial)');
     } else {
       setStatus(true);
-      showSuccess(`${allData.length} escalas carregadas!`);
-      console.log('✅ Sucesso:', allData.length, 'registros');
+      if (isInitialLoad) showSuccess(`${allData.length} escalas carregadas!`);
+      console.log('✅ Dados carregados:', allData.length, 'registros');
     }
-    
+
     updateLocalDropdown();
-    
-    // AUTO-RENDER: mostrar os primeiros 10 registros
-    if (allData.length > 0) {
-      setTimeout(() => {
-        renderResults(allData.slice(0, 10));
-      }, 300);
+
+    if (isInitialLoad) {
+      document.getElementById('results-container').innerHTML = '';
+      isInitialLoad = false;
     }
-    
+
   } catch (error) {
-    console.error('❌ Erro:', error.message);
-    console.error('Stack:', error.stack);
+    console.error('❌ Erro ao carregar:', error);
     setStatus(false);
-    showError('Erro: ' + error.message);
-    
-    // Fallback para dados de exemplo
-    allData = getExampleData();
-    updateLocalDropdown();
-    document.getElementById('results-container').innerHTML = '';
+
+    if (isInitialLoad) {
+      const fallbackCsv = getStaticFallback();
+      let usedFallback = false;
+      if (fallbackCsv) {
+        try {
+          const parsedFallback = parseCSVData(fallbackCsv);
+          if (parsedFallback.length > 0) {
+            allData = parsedFallback;
+            usedFallback = true;
+            setFallbackBanner(true);
+            showSuccess(`${allData.length} escalas carregadas do backup estático (erro: ${error.message}).`);
+          }
+        } catch (fbErr) {
+          console.warn('Backup estático inválido:', fbErr.message);
+        }
+      }
+      if (!usedFallback) {
+        showError('Erro: ' + error.message);
+        allData = getExampleData();
+      }
+      updateLocalDropdown();
+      document.getElementById('results-container').innerHTML = '';
+      isInitialLoad = false;
+    }
   }
 }
 
-// DADOS DE EXEMPLO PARA TESTAR
 function getExampleData() {
   return [
     {
@@ -481,34 +580,19 @@ function getExampleData() {
 
 function parseCSVData(csvText) {
   const lines = csvText.trim().split('\n');
-  console.log('Total de linhas:', lines.length);
-  
   const data = [];
-  
-  // Mostrar estrutura
-  for (let i = 0; i < Math.min(10, lines.length); i++) {
-    const cols = parseCSVLine(lines[i]);
-    console.log(`Linha ${i}: ${cols.length} colunas | "${cols[0]}" | "${cols[1]}" | "${cols[2]}"`);
-  }
-  
-  // Começar a parsear a partir da linha que tiver "ID" ou similar
+
   let startRow = 0;
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].toLowerCase();
     if (line.includes('id') && (line.includes('data') || line.includes('hora') || line.includes('local'))) {
       startRow = i + 1;
-      console.log('Cabeçalho encontrado na linha', i, '- começando dados em', startRow);
       break;
     }
   }
-  
-  // Se não encontrou, começa do começo
-  if (startRow === 0) {
-    startRow = 6; // padrão antigo
-    console.log('Cabeçalho não encontrado, usando padrão linha 6');
-  }
-  
-  // Parsear dados
+
+  if (startRow === 0) startRow = 1;
+
   for (let i = startRow; i < lines.length; i++) {
     const line = lines[i].trim();
     if (!line) continue;
@@ -524,13 +608,6 @@ function parseCSVData(csvText) {
 
     if (id) {
       const { data: dataParsed, hora } = parseDataHora(dataHoraInicio);
-      
-      // FILTRO: Descartar JAN-JUN (meses 01-06)
-      const mesData = dataParsed.split('/')[1];
-      if (mesData && parseInt(mesData) < 7) {
-        continue; // Pula registros de jan-jun
-      }
-      
       const militares = parseEscalado(escalado);
 
       data.push({
@@ -542,14 +619,9 @@ function parseCSVData(csvText) {
         escalado,
         militares
       });
-      
-      if (data.length <= 5) {
-        console.log(`✅ Parsed linha ${i}:`, id, local, 'Mês:', mesData);
-      }
     }
   }
 
-  console.log('Total de registros parseados:', data.length);
   return data;
 }
 
@@ -605,12 +677,12 @@ function parseEscalado(escaladoStr) {
     const matricula = tokens[0];
     const pmIdx = tokens.indexOf('PM');
     if (pmIdx === -1 || pmIdx < 2) return;
-    
+
     let patentStart = pmIdx - 1;
     if (pmIdx >= 3 && /^\d+\.$/.test(tokens[pmIdx - 2])) {
       patentStart = pmIdx - 2;
     }
-    
+
     const nome = tokens.slice(1, patentStart).join(' ');
     const patente = tokens.slice(patentStart).join(' ');
 
@@ -630,7 +702,7 @@ function updateLocalDropdown() {
   const locais = [...new Set(allData.map(d => d.local).filter(Boolean))].sort();
   const select = document.getElementById('filter-local');
   const currentValue = select.value;
-  
+
   select.innerHTML = '<option value="">-- Selecione --</option>';
   locais.forEach(local => {
     const opt = document.createElement('option');
@@ -649,11 +721,10 @@ function applyFilters() {
   }
 
   const filtroId = document.getElementById('filter-id').value.trim().toUpperCase();
-  const filtroDataInicio = document.getElementById('filter-date-inicio').value;
-  const filtroDataFim = document.getElementById('filter-date-fim').value;
+  const filtroData = document.getElementById('filter-date').value;
   const filtroLocal = document.getElementById('filter-local').value;
 
-  if (!filtroId && !filtroDataInicio && !filtroDataFim && !filtroLocal) {
+  if (!filtroId && !filtroData && !filtroLocal) {
     showError('Selecione ao menos um filtro (ID, Data ou Local).');
     document.getElementById('results-container').innerHTML = '';
     return;
@@ -662,28 +733,11 @@ function applyFilters() {
   let resultado = allData.filter(row => {
     let match = true;
     if (filtroId && !row.id.toUpperCase().includes(filtroId)) match = false;
-    
-    if ((filtroDataInicio || filtroDataFim) && match) {
-      const partes = row.data.split('/');
-      if (partes.length === 3) {
-        const rowDate = new Date(parseInt(partes[2]), parseInt(partes[1])-1, parseInt(partes[0]));
-        
-        if (filtroDataInicio) {
-          const [dia, mes, ano] = filtroDataInicio.split('-').reverse();
-          const dataInicio = new Date(ano, mes-1, dia);
-          if (rowDate < dataInicio) match = false;
-        }
-        
-        if (filtroDataFim && match) {
-          const [dia, mes, ano] = filtroDataFim.split('-').reverse();
-          const dataFim = new Date(ano, mes-1, dia);
-          if (rowDate > dataFim) match = false;
-        }
-      } else {
-        match = false;
-      }
+    if (filtroData && match) {
+      const [dia, mes, ano] = filtroData.split('-').reverse();
+      const dataFiltro = `${dia}/${mes}/${ano}`;
+      if (row.data !== dataFiltro) match = false;
     }
-    
     if (filtroLocal && row.local.toUpperCase() !== filtroLocal.toUpperCase()) match = false;
     return match;
   });
@@ -693,12 +747,9 @@ function applyFilters() {
 
 function clearFilters() {
   document.getElementById('filter-id').value = '';
-  document.getElementById('filter-date-inicio').value = '';
-  document.getElementById('filter-date-fim').value = '';
+  document.getElementById('filter-date').value = '';
   document.getElementById('filter-local').value = '';
-  selectedDateInicio = null;
-  selectedDateFim = null;
-  selectingFim = false;
+  selectedDate = null;
   renderCalendar();
   document.getElementById('results-container').innerHTML = '';
   showSuccess('Filtros limpos.');
@@ -741,7 +792,6 @@ function renderResults(data) {
   container.innerHTML = html;
 }
 
-// FUNDO ANIMADO
 (function(){
   var c=document.getElementById('fireCanvas');
   if(!c) return;
@@ -765,7 +815,7 @@ function renderResults(data) {
     window.addEventListener('resize',fb);
     return;
   }
-  
+
   var W=0,H=0;
   function size(){
     var w=window.innerWidth,h=window.innerHeight;
@@ -781,7 +831,7 @@ function renderResults(data) {
   }
   size();
   window.addEventListener('resize',size);
-  
+
   var vs='attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}';
   var fs=['precision highp float;','uniform vec2 R;uniform float T;',
    'float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453123);}',
@@ -804,13 +854,13 @@ function renderResults(data) {
    ' col*=0.5;',
    ' gl_FragColor=vec4(col,1.0);',
    '}'].join('\n');
-  
+
   function sh(t,src){var s=gl.createShader(t);gl.shaderSource(s,src);gl.compileShader(s);return s;}
   var prog=gl.createProgram();
   gl.attachShader(prog,sh(gl.VERTEX_SHADER,vs));
   gl.attachShader(prog,sh(gl.FRAGMENT_SHADER,fs));
   gl.linkProgram(prog);
-  
+
   if(!gl.getProgramParameter(prog,gl.LINK_STATUS)){
     var x=c.getContext('2d');
     var fb=function(){
@@ -828,18 +878,18 @@ function renderResults(data) {
     return;
   }
   gl.useProgram(prog);
-  
+
   var b=gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER,b);
   gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);
-  
+
   var loc=gl.getAttribLocation(prog,'p');
   gl.enableVertexAttribArray(loc);
   gl.vertexAttribPointer(loc,2,gl.FLOAT,false,0,0);
-  
+
   var uR=gl.getUniformLocation(prog,'R'),uT=gl.getUniformLocation(prog,'T');
   var start=performance.now();
-  
+
   function frame(){
     requestAnimationFrame(frame);
     if(!running)return;
@@ -848,12 +898,11 @@ function renderResults(data) {
     gl.uniform1f(uT,t);
     gl.drawArrays(gl.TRIANGLES,0,3);
   }
-  
+
   document.addEventListener('visibilitychange',function(){running=!document.hidden;});
   requestAnimationFrame(frame);
 })();
 
-// INICIAR
 window.addEventListener('load', loadFromGoogleSheets);
 setInterval(loadFromGoogleSheets, 30000);
 </script>
