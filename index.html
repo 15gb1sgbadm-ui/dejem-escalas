@@ -380,30 +380,56 @@ document.addEventListener('click', (e) => {
   }
 });
 
-// CARREGAR CSV DIRETO DO GOOGLE SHEETS (SEM BACKEND)
+// CARREGAR CSV DE JULHO A DEZEMBRO
 async function loadFromGoogleSheets() {
   try {
-    document.getElementById('results-container').innerHTML = '<div class="loading"><span class="spinner"></span>Carregando escalas...</div>';
+    document.getElementById('results-container').innerHTML = '<div class="loading"><span class="spinner"></span>Carregando escalas de julho a dezembro...</div>';
     
-    // URL CSV publicado direto do Google Sheets
-    const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTq7gkTFeC7stzGVvCOr3h7GkvaklQqIsYwaD29WOsInW3td9XnOGa9bnAXltr7JX0dkqBkWEiiHFYb/pub?output=csv';
+    // Meses de julho a dezembro com seus GIDs
+    const meses = [
+      { nome: 'JULHO', gid: 0 },
+      { nome: 'AGOSTO', gid: 1 },
+      { nome: 'SETEMBRO', gid: 2 },
+      { nome: 'OUTUBRO', gid: 3 },
+      { nome: 'NOVEMBRO', gid: 4 },
+      { nome: 'DEZEMBRO', gid: 5 }
+    ];
     
-    console.log('Carregando CSV direto...');
-    const response = await fetch(csvUrl);
+    allData = [];
+    let sucessoCount = 0;
     
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
+    // Carregar cada mês
+    for (let mes of meses) {
+      try {
+        const csvUrl = `https://docs.google.com/spreadsheets/d/e/2PACX-1vTq7gkTFeC7stzGVvCOr3h7GkvaklQqIsYwaD29WOsInW3td9XnOGa9bnAXltr7JX0dkqBkWEiiHFYb/pub?gid=${mes.gid}&single=true&output=csv`;
+        
+        console.log(`Carregando ${mes.nome}...`);
+        const response = await fetch(csvUrl);
+        
+        if (!response.ok) {
+          console.log(`⚠️ ${mes.nome} não encontrado`);
+          continue;
+        }
+        
+        const csvText = await response.text();
+        if (!csvText || csvText.length < 10) {
+          console.log(`⚠️ ${mes.nome} vazio`);
+          continue;
+        }
+        
+        const mesData = parseCSVData(csvText);
+        if (mesData.length > 0) {
+          allData = allData.concat(mesData);
+          sucessoCount++;
+          console.log(`✅ ${mes.nome}: ${mesData.length} registros`);
+        }
+        
+      } catch (e) {
+        console.log(`❌ Erro ao carregar ${mes.nome}:`, e.message);
+      }
     }
     
-    const csvText = await response.text();
-    console.log('CSV recebido, tamanho:', csvText.length, 'bytes');
-    
-    if (!csvText || csvText.length < 10) {
-      throw new Error('CSV vazio');
-    }
-    
-    allData = parseCSVData(csvText);
-    console.log('Total parseado:', allData.length);
+    console.log('Total carregado:', allData.length, 'de', sucessoCount, 'meses');
     
     if (allData.length === 0) {
       console.warn('⚠️ Nenhum registro encontrado');
@@ -412,8 +438,8 @@ async function loadFromGoogleSheets() {
       showError('Nenhuma escala encontrada (usando dados de exemplo)');
     } else {
       setStatus(true);
-      showSuccess(`${allData.length} escalas carregadas!`);
-      console.log('✅ Sucesso:', allData.length, 'registros');
+      showSuccess(`${allData.length} escalas carregadas de ${sucessoCount} meses!`);
+      console.log('✅ Sucesso!');
     }
     
     updateLocalDropdown();
