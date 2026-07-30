@@ -422,7 +422,13 @@ async function loadFromGoogleSheets() {
     }
     
     updateLocalDropdown();
-    document.getElementById('results-container').innerHTML = '';
+    
+    // AUTO-RENDER: mostrar os primeiros 10 registros
+    if (allData.length > 0) {
+      setTimeout(() => {
+        renderResults(allData.slice(0, 10));
+      }, 300);
+    }
     
   } catch (error) {
     console.error('❌ Erro:', error.message);
