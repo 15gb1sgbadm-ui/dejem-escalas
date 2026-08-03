@@ -69,6 +69,16 @@ main{padding:22px 28px;max-width:1400px;margin:0 auto}
 .btn-clear{display:flex;align-items:center;gap:6px;background:rgba(215,38,56,.15);border:1px solid rgba(215,38,56,.3);color:#FC8181;border-radius:8px;padding:9px 16px;font-family:'Barlow';font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;white-space:nowrap}
 .btn-clear:hover{background:rgba(215,38,56,.25);border-color:rgba(215,38,56,.5)}
 
+.dejem-notice{background:rgba(245,166,35,.12);border:1px solid rgba(245,166,35,.35);border-left:4px solid var(--y);color:var(--t);border-radius:8px;padding:18px 20px;margin-bottom:18px;font-size:16px;line-height:1.7}
+.dejem-notice strong{color:var(--y);font-size:17px}
+.dejem-notice p{margin:0 0 6px 0}
+.dejem-notice p:last-child{margin-bottom:0}
+.dejem-notice p.notice-title{margin-bottom:10px}
+@media(max-width:768px){
+  .dejem-notice{font-size:14px;padding:14px 16px}
+  .dejem-notice strong{font-size:15px}
+}
+
 .alert{padding:14px 16px;border-radius:8px;margin-bottom:16px;font-size:12px;display:none;align-items:center;gap:8px}
 .alert-error{background:rgba(215,38,56,.15);border:1px solid rgba(215,38,56,.3);color:#FC8181}
 .alert-success{background:rgba(39,174,96,.15);border:1px solid rgba(39,174,96,.3);color:#4ADE80}
@@ -231,6 +241,13 @@ main{padding:22px 28px;max-width:1400px;margin:0 auto}
 
     <button class="btn-apply" id="btn-filter" onclick="applyFilters()">Pesquisar</button>
     <button class="btn-clear" onclick="clearFilters()">Limpar</button>
+  </div>
+
+  <div class="dejem-notice">
+    <p class="notice-title"><strong>⚠️ Atenção militares ⚠️:</strong></p>
+    <p>Consulte o SISTEMA DEJEM, com pelo menos 24 horas de antecedência, para verificar se você está na escala.</p>
+    <p>Essa é a única forma oficial de consulta e de resguardo da responsabilidade administrativa em caso de atraso e/ou falta ao serviço.</p>
+    <p>Os demais avisos ou controles da Administração não substituem a necessidade de tal verificação no sistema.</p>
   </div>
 
   <div id="results-container"></div>
