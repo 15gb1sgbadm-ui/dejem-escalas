@@ -102,13 +102,16 @@ main{padding:22px 28px;max-width:1400px;margin:0 auto}
 .empty-state-text{font-size:14px;color:var(--m);margin-bottom:8px}
 
 .date-picker-wrapper{position:relative;display:inline-block;width:100%}
+#filter-date-display{min-width:250px;width:100%}
 .calendar-popup{display:none;position:absolute;top:100%;left:0;background:var(--s1);border:1px solid var(--b);border-radius:10px;padding:16px;margin-top:8px;z-index:200;min-width:300px;box-shadow:0 10px 30px rgba(0,0,0,.5)}
 .calendar-popup.show{display:block}
-.calendar-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.calendar-months{display:flex;gap:24px}
+.calendar-month{flex:1;min-width:230px}
+.calendar-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:8px}
 .calendar-nav{display:flex;gap:8px}
-.calendar-btn{background:rgba(245,166,35,.15);border:1px solid rgba(245,166,35,.3);color:var(--y);padding:6px 12px;border-radius:6px;font-size:11px;cursor:pointer;transition:all .2s;font-weight:600}
+.calendar-btn{background:rgba(245,166,35,.15);border:1px solid rgba(245,166,35,.3);color:var(--y);padding:6px 12px;border-radius:6px;font-size:11px;cursor:pointer;transition:all .2s;font-weight:600;white-space:nowrap}
 .calendar-btn:hover{background:rgba(245,166,35,.25)}
-.calendar-title{font-family:'Barlow Condensed';font-size:14px;font-weight:700;color:var(--t);letter-spacing:1px}
+.calendar-title{font-family:'Barlow Condensed';font-size:14px;font-weight:700;color:var(--t);letter-spacing:1px;flex:1;text-align:center}
 .calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
 .calendar-day-header{font-size:10px;font-weight:700;color:var(--m);text-align:center;padding:8px 4px;text-transform:uppercase}
 .calendar-day{padding:8px 4px;text-align:center;border-radius:4px;cursor:pointer;font-size:12px;transition:all .2s;border:1px solid transparent}
@@ -117,6 +120,13 @@ main{padding:22px 28px;max-width:1400px;margin:0 auto}
 .calendar-day.today{background:rgba(39,174,96,.2);border-color:rgba(39,174,96,.4);color:#4ADE80}
 .calendar-day:not(.empty):not(.other-month):hover{background:rgba(245,166,35,.2);border-color:rgba(245,166,35,.3);color:var(--y)}
 .calendar-day.selected{background:rgba(215,38,56,.3);border-color:rgba(215,38,56,.5);color:var(--red);font-weight:700}
+.calendar-day.in-range{background:rgba(245,166,35,.15);border-radius:0}
+.calendar-day.range-start,.calendar-day.range-end{background:rgba(215,38,56,.3);border-color:rgba(215,38,56,.5);color:var(--red);font-weight:700}
+.calendar-day.range-start{border-radius:4px 0 0 4px}
+.calendar-day.range-end{border-radius:0 4px 4px 0}
+.calendar-day.range-start.range-end{border-radius:4px}
+.calendar-footer{display:flex;justify-content:space-between;align-items:center;margin-top:14px;padding-top:12px;border-top:1px solid var(--b);gap:10px;flex-wrap:wrap}
+.calendar-selection-info{font-size:11px;color:var(--m);letter-spacing:.5px}
 
 .modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:300;align-items:center;justify-content:center}
 .modal-overlay.show{display:flex}
@@ -137,6 +147,9 @@ main{padding:22px 28px;max-width:1400px;margin:0 auto}
   .results-grid{grid-template-columns:1fr}
   .hbrand .logo{font-size:20px}
   .card-header{flex-direction:column;align-items:flex-start}
+  .calendar-popup{min-width:auto;width:92vw;max-width:340px}
+  .calendar-months{flex-direction:column;gap:20px}
+  .calendar-month{min-width:auto}
 }
 </style>
 </head>
@@ -181,20 +194,30 @@ main{padding:22px 28px;max-width:1400px;margin:0 auto}
     </div>
 
     <div class="filter-item">
-      <label for="filter-date">Por Data</label>
+      <label for="filter-date-display">Por Data (Data Inicial — Data Final)</label>
       <div class="date-picker-wrapper">
-        <input type="text" id="filter-date" placeholder="Clique para selecionar" readonly>
+        <input type="text" id="filter-date-display" placeholder="Selecione o período" readonly>
         <div class="calendar-popup" id="calendar-popup">
-          <div class="calendar-header">
-            <div class="calendar-nav">
-              <button class="calendar-btn" onclick="prevMonth()">← Anterior</button>
+          <div class="calendar-months">
+            <div class="calendar-month">
+              <div class="calendar-header">
+                <button class="calendar-btn" onclick="prevMonth()">← Anterior</button>
+                <div class="calendar-title" id="calendar-title-1">Julho 2026</div>
+              </div>
+              <div class="calendar-grid" id="calendar-grid-1"></div>
             </div>
-            <div class="calendar-title" id="calendar-title">Julho 2026</div>
-            <div class="calendar-nav">
-              <button class="calendar-btn" onclick="nextMonth()">Próximo →</button>
+            <div class="calendar-month">
+              <div class="calendar-header">
+                <div class="calendar-title" id="calendar-title-2">Agosto 2026</div>
+                <button class="calendar-btn" onclick="nextMonth()">Próximo →</button>
+              </div>
+              <div class="calendar-grid" id="calendar-grid-2"></div>
             </div>
           </div>
-          <div class="calendar-grid" id="calendar-grid"></div>
+          <div class="calendar-footer">
+            <div class="calendar-selection-info" id="calendar-selection-info">Selecione a data inicial</div>
+            <button class="btn-clear" style="padding:6px 12px;font-size:11px" onclick="clearDateRange()">Limpar período</button>
+          </div>
         </div>
       </div>
     </div>
@@ -240,7 +263,8 @@ main{padding:22px 28px;max-width:1400px;margin:0 auto}
 <script>
 let allData = [];
 let currentCalendarDate = new Date();
-let selectedDate = null;
+let rangeStart = null;
+let rangeEnd = null;
 
 function updateClock() {
   const now = new Date();
@@ -330,13 +354,53 @@ function getStaticFallback() {
   return localStorage.getItem(FALLBACK_STORAGE_KEY);
 }
 
-function renderCalendar() {
-  const year = currentCalendarDate.getFullYear();
-  const month = currentCalendarDate.getMonth();
-  const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
-  document.getElementById('calendar-title').textContent = `${monthNames[month]} ${year}`;
+function pad2(n) { return String(n).padStart(2, '0'); }
 
-  const grid = document.getElementById('calendar-grid');
+function formatDateBR(date) {
+  return `${pad2(date.getDate())}/${pad2(date.getMonth() + 1)}/${date.getFullYear()}`;
+}
+
+function parseDateBR(str) {
+  if (!str) return null;
+  const parts = str.split('/');
+  if (parts.length !== 3) return null;
+  const [d, m, y] = parts.map(Number);
+  if (!d || !m || !y) return null;
+  return new Date(y, m - 1, d);
+}
+
+function dayOnly(date) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+function updateDateDisplay() {
+  const input = document.getElementById('filter-date-display');
+  if (rangeStart && rangeEnd) {
+    input.value = `${formatDateBR(rangeStart)}  →  ${formatDateBR(rangeEnd)}`;
+  } else if (rangeStart) {
+    input.value = `${formatDateBR(rangeStart)}  →  ...`;
+  } else {
+    input.value = '';
+  }
+}
+
+function updateSelectionInfo() {
+  const info = document.getElementById('calendar-selection-info');
+  if (!info) return;
+  if (rangeStart && !rangeEnd) {
+    info.textContent = 'Selecione a data final';
+  } else if (rangeStart && rangeEnd) {
+    info.textContent = 'Período selecionado';
+  } else {
+    info.textContent = 'Selecione a data inicial';
+  }
+}
+
+function renderMonth(gridId, titleId, year, month) {
+  const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+  document.getElementById(titleId).textContent = `${monthNames[month]} ${year}`;
+
+  const grid = document.getElementById(gridId);
   grid.innerHTML = '';
 
   const dayHeaders = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'];
@@ -369,11 +433,20 @@ function renderCalendar() {
       day.classList.add('today');
     }
 
-    if (selectedDate && date.toDateString() === selectedDate.toDateString()) {
+    if (rangeStart && !rangeEnd && date.toDateString() === rangeStart.toDateString()) {
       day.classList.add('selected');
     }
+    if (rangeStart && date.toDateString() === rangeStart.toDateString()) {
+      day.classList.add('range-start');
+    }
+    if (rangeEnd && date.toDateString() === rangeEnd.toDateString()) {
+      day.classList.add('range-end');
+    }
+    if (rangeStart && rangeEnd && date > rangeStart && date < rangeEnd) {
+      day.classList.add('in-range');
+    }
 
-    day.addEventListener('click', () => selectDate(date));
+    day.addEventListener('click', () => selectDateRange(date));
     grid.appendChild(day);
   }
 
@@ -386,13 +459,41 @@ function renderCalendar() {
   }
 }
 
-function selectDate(date) {
-  selectedDate = date;
-  const dateStr = date.toISOString().split('T')[0];
-  document.getElementById('filter-date').value = dateStr;
+function renderCalendar() {
+  const leftYear = currentCalendarDate.getFullYear();
+  const leftMonth = currentCalendarDate.getMonth();
+  const rightDate = new Date(leftYear, leftMonth + 1, 1);
+
+  renderMonth('calendar-grid-1', 'calendar-title-1', leftYear, leftMonth);
+  renderMonth('calendar-grid-2', 'calendar-title-2', rightDate.getFullYear(), rightDate.getMonth());
+  updateSelectionInfo();
+}
+
+function selectDateRange(date) {
+  if (!rangeStart || (rangeStart && rangeEnd)) {
+    rangeStart = date;
+    rangeEnd = null;
+  } else if (date < rangeStart) {
+    rangeStart = date;
+    rangeEnd = null;
+  } else {
+    rangeEnd = date;
+  }
+
+  updateDateDisplay();
   renderCalendar();
-  closeCalendar();
-  applyFilters();
+
+  if (rangeStart && rangeEnd) {
+    closeCalendar();
+    applyFilters();
+  }
+}
+
+function clearDateRange() {
+  rangeStart = null;
+  rangeEnd = null;
+  updateDateDisplay();
+  renderCalendar();
 }
 
 function prevMonth() {
@@ -414,7 +515,7 @@ function closeCalendar() {
   document.getElementById('calendar-popup').classList.remove('show');
 }
 
-document.getElementById('filter-date').addEventListener('click', openCalendar);
+document.getElementById('filter-date-display').addEventListener('click', openCalendar);
 document.addEventListener('click', (e) => {
   if (!e.target.closest('.date-picker-wrapper')) {
     closeCalendar();
@@ -721,22 +822,34 @@ function applyFilters() {
   }
 
   const filtroId = document.getElementById('filter-id').value.trim().toUpperCase();
-  const filtroData = document.getElementById('filter-date').value;
   const filtroLocal = document.getElementById('filter-local').value;
+  const temFiltroData = !!rangeStart;
 
-  if (!filtroId && !filtroData && !filtroLocal) {
+  if (!filtroId && !temFiltroData && !filtroLocal) {
     showError('Selecione ao menos um filtro (ID, Data ou Local).');
     document.getElementById('results-container').innerHTML = '';
     return;
   }
 
+  let dIni = null, dFim = null;
+  if (temFiltroData) {
+    const inicio = dayOnly(rangeStart);
+    const fim = dayOnly(rangeEnd || rangeStart);
+    dIni = inicio <= fim ? inicio : fim;
+    dFim = inicio <= fim ? fim : inicio;
+  }
+
   let resultado = allData.filter(row => {
     let match = true;
     if (filtroId && !row.id.toUpperCase().includes(filtroId)) match = false;
-    if (filtroData && match) {
-      const [dia, mes, ano] = filtroData.split('-').reverse();
-      const dataFiltro = `${dia}/${mes}/${ano}`;
-      if (row.data !== dataFiltro) match = false;
+    if (temFiltroData && match) {
+      const dataRow = parseDateBR(row.data);
+      if (!dataRow) {
+        match = false;
+      } else {
+        const dRow = dayOnly(dataRow);
+        if (dRow < dIni || dRow > dFim) match = false;
+      }
     }
     if (filtroLocal && row.local.toUpperCase() !== filtroLocal.toUpperCase()) match = false;
     return match;
@@ -747,10 +860,8 @@ function applyFilters() {
 
 function clearFilters() {
   document.getElementById('filter-id').value = '';
-  document.getElementById('filter-date').value = '';
   document.getElementById('filter-local').value = '';
-  selectedDate = null;
-  renderCalendar();
+  clearDateRange();
   document.getElementById('results-container').innerHTML = '';
   showSuccess('Filtros limpos.');
 }
