@@ -102,6 +102,10 @@ main{padding:22px 28px;max-width:1400px;margin:0 auto}
 .card-militar-item{font-size:12px;color:var(--t);line-height:1.5}
 .card-militar-label{font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--m);font-weight:600;margin-bottom:6px;display:block}
 
+.card-militar-status{border-left-color:var(--red);background:rgba(215,38,56,.14)}
+.card-militar-status .card-militar-label{color:#FC8181}
+.status-alert{color:#FF5A6E;font-weight:700}
+
 .loading{text-align:center;padding:40px 20px;color:var(--m)}
 .spinner{display:inline-block;width:20px;height:20px;border:2px solid var(--b);border-top-color:var(--red);border-radius:50%;animation:spin .8s linear infinite;margin-right:8px;vertical-align:middle}
 
@@ -237,6 +241,11 @@ main{padding:22px 28px;max-width:1400px;margin:0 auto}
       <select id="filter-local">
         <option value="">-- Selecione --</option>
       </select>
+    </div>
+
+    <div class="filter-item">
+      <label for="filter-re">Por RE</label>
+      <input type="text" id="filter-re" placeholder="Ex: 108248 (sem dígito)" inputmode="numeric" maxlength="12">
     </div>
 
     <button class="btn-apply" id="btn-filter" onclick="applyFilters()">Pesquisar</button>
@@ -670,7 +679,8 @@ function getExampleData() {
       local: 'QUARTEL DO COMANDO',
       tipoEscala: 'ESCALA ORDINÁRIA',
       escalado: '108248 EDUARDO ALVES CARDOSO 1. SARGENTO PM',
-      militares: [{matricula: '108248', nome: 'EDUARDO ALVES CARDOSO', patente: '1. SARGENTO PM'}]
+      militares: [{matricula: '108248', nome: 'EDUARDO ALVES CARDOSO', patente: '1. SARGENTO PM'}],
+      statusEntries: []
     },
     {
       id: '8604017',
@@ -679,7 +689,8 @@ function getExampleData() {
       local: 'ESTAÇÃO CENTRAL',
       tipoEscala: 'ESCALA ORDINÁRIA',
       escalado: '181371 FABIO TERRA GONCALVES CABO PM',
-      militares: [{matricula: '181371', nome: 'FABIO TERRA GONCALVES', patente: 'CABO PM'}]
+      militares: [{matricula: '181371', nome: 'FABIO TERRA GONCALVES', patente: 'CABO PM'}],
+      statusEntries: []
     },
     {
       id: '8604018',
@@ -691,7 +702,18 @@ function getExampleData() {
       militares: [
         {matricula: '102134', nome: 'CARLOS SILVA', patente: 'SOLDADO PM'},
         {matricula: '103456', nome: 'JOÃO SANTOS', patente: 'SOLDADO PM'}
-      ]
+      ],
+      statusEntries: []
+    },
+    {
+      id: '8604019',
+      data: '18/07/2026',
+      hora: '10:00',
+      local: 'ESTAÇÃO SUL',
+      tipoEscala: 'ESCALA ORDINÁRIA',
+      escalado: 'CANCELADA',
+      militares: [],
+      statusEntries: ['CANCELADA']
     }
   ];
 }
@@ -726,7 +748,7 @@ function parseCSVData(csvText) {
 
     if (id) {
       const { data: dataParsed, hora } = parseDataHora(dataHoraInicio);
-      const militares = parseEscalado(escalado);
+      const { militares, statusEntries } = parseEscalado(escalado);
 
       data.push({
         id,
@@ -735,7 +757,8 @@ function parseCSVData(csvText) {
         local: local || 'Sem local',
         tipoEscala: tipoEscala || 'Não especificado',
         escalado,
-        militares
+        militares,
+        statusEntries
       });
     }
   }
@@ -782,13 +805,33 @@ function parseDataHora(dataHoraStr) {
   return { data: dataFormatada, hora: horaFormatada };
 }
 
-function parseEscalado(escaladoStr) {
-  if (!escaladoStr) return [];
+const STATUS_INSCRICAO_KEYWORDS = ['REMANEJAMENTO', 'ALTERADA', 'CANCELADA', 'EXCLUIDA'];
 
+function normalizeStatusText(s) {
+  return (s || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase();
+}
+
+function isStatusInscricao(part) {
+  const norm = normalizeStatusText(part);
+  return STATUS_INSCRICAO_KEYWORDS.some(k => norm.includes(k));
+}
+
+function parseEscalado(escaladoStr) {
   const militares = [];
+  const statusEntries = [];
+  if (!escaladoStr) return { militares, statusEntries };
+
   const parts = escaladoStr.split('//').map(p => p.trim()).filter(p => p);
 
   parts.forEach(part => {
+    if (isStatusInscricao(part)) {
+      statusEntries.push(part);
+      return;
+    }
+
     let tokens = part.split(/[\t\s]+/).filter(t => t);
     if (tokens.length < 3) return;
 
@@ -813,7 +856,7 @@ function parseEscalado(escaladoStr) {
     }
   });
 
-  return militares;
+  return { militares, statusEntries };
 }
 
 function updateLocalDropdown() {
@@ -832,6 +875,20 @@ function updateLocalDropdown() {
   select.value = currentValue;
 }
 
+function reMatches(militares, filtroReDigits) {
+  if (!filtroReDigits) return true;
+  if (!militares || militares.length === 0) return false;
+  return militares.some(mil => {
+    const matDigits = (mil.matricula || '').replace(/\D/g, '');
+    if (!matDigits) return false;
+    // Usuário informa o RE sem o dígito verificador: aceita
+    // correspondência exata ou o RE completo (matrícula) começando
+    // com o valor digitado (cobre o caso "sem dígito" e o caso em
+    // que o dígito foi digitado por engano).
+    return matDigits === filtroReDigits || matDigits.startsWith(filtroReDigits);
+  });
+}
+
 function applyFilters() {
   if (allData.length === 0) {
     document.getElementById('results-container').innerHTML = '<div class="empty-state"><div class="empty-state-icon">📋</div><div class="empty-state-text">Nenhuma escala carregada.</div></div>';
@@ -840,10 +897,11 @@ function applyFilters() {
 
   const filtroId = document.getElementById('filter-id').value.trim().toUpperCase();
   const filtroLocal = document.getElementById('filter-local').value;
+  const filtroReDigits = document.getElementById('filter-re').value.trim().replace(/\D/g, '');
   const temFiltroData = !!rangeStart;
 
-  if (!filtroId && !temFiltroData && !filtroLocal) {
-    showError('Selecione ao menos um filtro (ID, Data ou Local).');
+  if (!filtroId && !temFiltroData && !filtroLocal && !filtroReDigits) {
+    showError('Selecione ao menos um filtro (ID, Data, Local ou RE).');
     document.getElementById('results-container').innerHTML = '';
     return;
   }
@@ -868,7 +926,8 @@ function applyFilters() {
         if (dRow < dIni || dRow > dFim) match = false;
       }
     }
-    if (filtroLocal && row.local.toUpperCase() !== filtroLocal.toUpperCase()) match = false;
+    if (filtroLocal && match && row.local.toUpperCase() !== filtroLocal.toUpperCase()) match = false;
+    if (filtroReDigits && match && !reMatches(row.militares, filtroReDigits)) match = false;
     return match;
   });
 
@@ -878,6 +937,7 @@ function applyFilters() {
 function clearFilters() {
   document.getElementById('filter-id').value = '';
   document.getElementById('filter-local').value = '';
+  document.getElementById('filter-re').value = '';
   clearDateRange();
   document.getElementById('results-container').innerHTML = '';
   showSuccess('Filtros limpos.');
@@ -909,7 +969,17 @@ function renderResults(data) {
         html += `<div class="card-militar-item"><strong>${mil.patente}</strong> ${mil.nome}</div>`;
       });
       html += '</div>';
-    } else {
+    }
+
+    if (row.statusEntries && row.statusEntries.length > 0) {
+      html += `<div class="card-militar card-militar-status"><span class="card-militar-label">⚠️ Vaga Sem Militar — DEJEM Realocada</span>`;
+      row.statusEntries.forEach(entry => {
+        html += `<div class="card-militar-item status-alert">${entry}</div>`;
+      });
+      html += '</div>';
+    }
+
+    if (row.militares.length === 0 && (!row.statusEntries || row.statusEntries.length === 0)) {
       html += `<div class="card-militar"><span class="card-militar-label">Militares</span><div class="card-militar-item" style="color:var(--m)">Nenhum militar registrado</div></div>`;
     }
 
