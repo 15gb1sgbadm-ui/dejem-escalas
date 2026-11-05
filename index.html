@@ -795,12 +795,16 @@ function parseCSVLine(line) {
 }
 
 function parseDataHora(dataHoraStr) {
-  const match = dataHoraStr.match(/(\d{1,2})\/(\d{1,2})\/(\d{2})\s+(\d{2}):(\d{2})/);
+  // Aceita ano com 2 ou 4 dígitos: "06/11/26   15:30" e "07/11/2026 07:40"
+  const match = String(dataHoraStr || '').match(/(\d{1,2})\/(\d{1,2})\/(\d{2,4})\s+(\d{1,2}):(\d{2})/);
   if (!match) return { data: '', hora: '' };
 
-  const [, dia, mes, ano, hora, minuto] = match;
-  const dataFormatada = `${String(dia).padStart(2, '0')}/${String(mes).padStart(2, '0')}/20${ano}`;
-  const horaFormatada = `${hora}:${minuto}`;
+  let [, dia, mes, ano, hora, minuto] = match;
+  if (ano.length === 2) ano = '20' + ano;
+  if (ano.length !== 4) return { data: '', hora: '' };
+
+  const dataFormatada = `${dia.padStart(2, '0')}/${mes.padStart(2, '0')}/${ano}`;
+  const horaFormatada = `${hora.padStart(2, '0')}:${minuto}`;
 
   return { data: dataFormatada, hora: horaFormatada };
 }
