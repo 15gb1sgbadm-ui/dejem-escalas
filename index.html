@@ -970,7 +970,7 @@ function renderResults(data) {
     if (row.militares.length > 0) {
       html += `<div class="card-militar"><span class="card-militar-label">Militares Escalados</span>`;
       row.militares.forEach(mil => {
-        html += `<div class="card-militar-item"><strong>${mil.patente}</strong> ${mil.nome}</div>`;
+        html += `<div class="card-militar-item"><strong>${mil.patente}</strong> ${mil.matricula} ${mil.nome}</div>`;
       });
       html += '</div>';
     }
@@ -992,7 +992,32 @@ function renderResults(data) {
 
   html += '</div>';
   container.innerHTML = html;
+  fitMilitarLines();
 }
+
+// Reduz a fonte de cada linha de militar até caber na largura do cartão
+// (tamanho base 12px, mínimo 8px). Se mesmo assim não couber, a linha quebra.
+const MILITAR_FONT_BASE = 12;
+const MILITAR_FONT_MIN = 8;
+
+function fitMilitarLines() {
+  document.querySelectorAll('.card-militar-item').forEach(el => {
+    el.style.whiteSpace = 'nowrap';
+    let size = MILITAR_FONT_BASE;
+    el.style.fontSize = size + 'px';
+    while (el.scrollWidth > el.clientWidth && size > MILITAR_FONT_MIN) {
+      size -= 0.5;
+      el.style.fontSize = size + 'px';
+    }
+    el.style.whiteSpace = '';
+  });
+}
+
+let fitResizeTimer = null;
+window.addEventListener('resize', () => {
+  clearTimeout(fitResizeTimer);
+  fitResizeTimer = setTimeout(fitMilitarLines, 150);
+});
 
 (function(){
   var c=document.getElementById('fireCanvas');
